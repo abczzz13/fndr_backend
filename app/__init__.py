@@ -1,7 +1,8 @@
+import os
 from flask import Flask
-from config import Config
 
 app = Flask(__name__)
-app.config.from_object(Config)
+env_config = os.environ.get("APP_SETTINGS", "config.DevelopmentConfig")
+app.config.from_object(env_config)
 
 from app import routes
