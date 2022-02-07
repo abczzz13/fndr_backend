@@ -1,1 +1,1 @@
-FLASK_APP=fndr_backend.py
+FLASK_APP=development flask run
