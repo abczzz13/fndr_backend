@@ -1,36 +1,84 @@
 from app import db
+import enum
 # from sqlalchemy.dialects.postgresql import JSON
 # JSON necessary?
 
 
-# Example table
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(120), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
-
-    def __repr__(self):
-        return "<User {}>".format(self.username)
+# Sizes enum for companies.company_size
+class Sizes(enum.Enum):
+    SMALL = "1 - 10"
+    MEDIUM = "11 - 25"
+    LARGE = "26 - 50"
+    XLARGE = "51 = 100"
 
 
-# Company table
 class Companies(db.Model):
     __tablename__ = "companies"
 
     company_id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(64))
-    eguide_link = db.Column(db.String(120))
-    eguide_image_src = db.Column(db.String(120))
-    city = db.Column(db.String(64))
-    website = db.Column(db.String(120))
+    company_name = db.Column(db.String(64))
+    logo_image_src = db.Column(db.String(255))
+    city_id = db.Column(db.Integer, db.ForeignKey('cities.city_id'))
+    website = db.Column(db.String(255))
     year = db.Column(db.Integer)
-    # Gaat dit goed met arrays?
-    discipline = db.Column(db.String(120))
-    branch = db.Column(db.String(120))
-    tag = db.Column(db.String(120))
-    region = db.Column(db.String(64))
-    company_size = db.Column(db.String(64))
+    company_size = db.Column(db.Enum(Sizes, values_callable=lambda x: [
+                             str(member.value) for member in Sizes]))
 
     def __repr__(self):
         return "<Company ID {}>".format(self.company_id)
+
+
+# Regions enum for cities.region
+class Regions(enum.Enum):
+    DR = "Drenthe"
+    FL = "Flevoland"
+    FR = "Friesland"
+    GD = "Gelderland"
+    GR = "Groningen"
+    LB = "Limburg"
+    NB = "Noord-Brabant"
+    NH = "Noord-Holland"
+    OV = "Overijssel"
+    UT = "Utrecht"
+    ZH = "Zuid-Holland"
+    ZL = "Zeeland"
+
+
+class Cities(db.Model):
+    __tablename__ = "cities"
+
+    city_id = db.Column(db.Integer, primary_key=True)
+    city_name = db.Column(db.String(64))
+    region = db.Column(db.Enum(Regions, values_callable=lambda x: [
+                       str(member.value) for member in Regions]))
+
+    def __repr__(self):
+        return "<City ID {}>".format(self.city_id)
+
+
+# Types enum for meta.type
+class Types(enum.Enum):
+    ONE = "Discipline"
+    TWO = "Branch"
+    THREE = "Tag"
+
+
+class Meta(db.Model):
+    __tablename__ = "meta"
+
+    meta_id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.Enum(Types, values_callable=lambda x: [
+        str(member.value) for member in Types]))
+    meta_string = db.Column(db.String(120))
+
+    def __repr__(self):
+        return "<Meta ID {}>".format(self.meta_id)
+
+
+# Many to Many table for Companies and Meta
+companies_meta = db.Table('companies_meta',
+                          db.Column('meta_id', db.Integer, db.ForeignKey(
+                              'meta.meta_id'), primary_key=True),
+                          db.Column('company_id', db.Integer, db.ForeignKey(
+                              'companies.company_id'), primary_key=True)
+                          )
