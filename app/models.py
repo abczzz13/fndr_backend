@@ -1,7 +1,7 @@
 from app import db
 import enum
-# from sqlalchemy.dialects.postgresql import JSON
-# JSON necessary?
+
+# TODO: find out if db.relationship is warranted
 
 
 # Sizes enum for companies.company_size
