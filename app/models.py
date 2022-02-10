@@ -6,10 +6,10 @@ import enum
 
 # Sizes enum for companies.company_size
 class Sizes(enum.Enum):
-    SMALL = "1 - 10"
-    MEDIUM = "11 - 25"
-    LARGE = "26 - 50"
-    XLARGE = "51 = 100"
+    SMALL = "1-10"
+    MEDIUM = "11-50"
+    LARGE = "51-100"
+    XLARGE = "GT-100"
 
 
 class Companies(db.Model):
@@ -23,6 +23,7 @@ class Companies(db.Model):
     year = db.Column(db.Integer)
     company_size = db.Column(db.Enum(Sizes, values_callable=lambda x: [
                              str(member.value) for member in Sizes]))
+    meta = db.relationship('Meta', backref='company', lazy='dynamic')
 
     def __repr__(self):
         return "<Company ID {}>".format(self.company_id)
@@ -51,6 +52,7 @@ class Cities(db.Model):
     city_name = db.Column(db.String(64))
     region = db.Column(db.Enum(Regions, values_callable=lambda x: [
                        str(member.value) for member in Regions]))
+    company = db.relationship('Companies', backref='city', lazy='dynamic')
 
     def __repr__(self):
         return "<City ID {}>".format(self.city_id)
