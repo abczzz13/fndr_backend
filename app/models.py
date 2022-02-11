@@ -1,8 +1,6 @@
 from app import db
 import enum
 
-# TODO: find out if db.relationship is warranted
-
 
 # Sizes enum for companies.company_size
 class Sizes(enum.Enum):
