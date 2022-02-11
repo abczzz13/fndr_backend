@@ -1,8 +1,8 @@
-"""Initial migration of the schema
+"""Retry to fix the enums bug
 
-Revision ID: 0c4acb26a562
+Revision ID: e8fc06860769
 Revises: 
-Create Date: 2022-02-09 13:37:27.257208
+Create Date: 2022-02-11 09:59:35.092742
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '0c4acb26a562'
+revision = 'e8fc06860769'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -37,7 +37,7 @@ def upgrade():
     sa.Column('city_id', sa.Integer(), nullable=True),
     sa.Column('website', sa.String(length=255), nullable=True),
     sa.Column('year', sa.Integer(), nullable=True),
-    sa.Column('company_size', sa.Enum('1 - 10', '11 - 25', '26 - 50', '51 = 100', name='sizes'), nullable=True),
+    sa.Column('company_size', sa.Enum('1-10', '11-50', '51-100', 'GT-100', name='sizes'), nullable=True),
     sa.ForeignKeyConstraint(['city_id'], ['cities.city_id'], ),
     sa.PrimaryKeyConstraint('company_id')
     )
