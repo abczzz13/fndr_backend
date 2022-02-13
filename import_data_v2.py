@@ -3,6 +3,11 @@ from app import db
 from app.models import Companies, Cities, Meta, companies_meta
 
 
+# What to do with data validation?
+# What to do with errors?
+# Maybe truncate DB before running script? Possibly with a check Y/N?
+
+
 # Function to insert meta data
 # Example insert_meta(agency['disciplines'], 'Discipline', company_id)
 def insert_meta(input, type, company_id):

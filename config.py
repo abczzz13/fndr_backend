@@ -1,6 +1,9 @@
 import os
 import re
+from dotenv import load_dotenv
+
 basedir = os.path.abspath(os.path.dirname(__file__))
+load_dotenv(os.path.join(basedir, '.env'))
 
 
 # Configuration Settings
@@ -14,6 +17,10 @@ class Config():
     CSRF_ENABLED = True
     SECRET_KEY = os.environ.get("SECRET_KEY") or "you-will-never-guess"
 
+
+# Configuration Settings for Production
+class ProductionConfig(Config):
+
     # Adjust DB URI for sqlalchemy to work with Heroku
     uri = os.environ.get("DATABASE_URL")
     if uri.startswith("postgres://"):
@@ -21,11 +28,6 @@ class Config():
 
     SQLALCHEMY_DATABASE_URI = uri
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-
-
-# Configuration Settings for Production
-class ProductionConfig(Config):
-    pass
 
 
 # Configuration Settings for Development
