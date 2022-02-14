@@ -1,5 +1,9 @@
 from flask import jsonify
 from app import app
+'''
+The Application Factory way:
+from app import current_app as app
+'''
 from app.models import Companies, Cities, Meta, companies_meta
 
 
@@ -39,22 +43,6 @@ def get_all_companies():
                 current_company['branches'].append(meta.meta_string)
             if meta.type.value == "Tag":
                 current_company['tags'].append(meta.meta_string)
-
-    #     current_company['disciplines'] = []
-    #     current_company['branches'] = []
-    #     current_company['tags'] = []
-
-    #     # TODO: Findout if we can make these queries easier and more performant
-    #     metas = Meta.query.join(Meta.company).filter_by(company_id=company.company_id).all()
-    #     for meta in metas:
-    #         query = Meta.query.filter_by(meta_id=meta.meta_id).first()
-
-    #         if query.type.value == "Discipline":
-    #             current_company['disciplines'].append(query.meta_string)
-    #         if query.type.value == "Branch":
-    #             current_company['branches'].append(query.meta_string)
-    #         if query.type.value == "Tag":
-    #             current_company['tags'].append(query.meta_string)
 
         output.append(current_company)
 
