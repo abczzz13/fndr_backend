@@ -16,18 +16,19 @@ class Config():
     DEVELOPMENT = False
     CSRF_ENABLED = True
     SECRET_KEY = os.environ.get("SECRET_KEY") or "you-will-never-guess"
+    SQLALCHEMY_TRACK_MODIFICATIONS = False
 
 
 # Configuration Settings for Production
 class ProductionConfig(Config):
 
     # Adjust DB URI for sqlalchemy to work with Heroku
-    uri = os.environ.get("DATABASE_URL")
-    if uri.startswith("postgres://"):
-        uri = uri.replace("postgres://", "postgresql://", 1)
+    if os.environ.get("DATABASE_URL") is not None:
+        uri = os.environ.get("DATABASE_URL")
+        if uri.startswith("postgres://"):
+            uri = uri.replace("postgres://", "postgresql://", 1)
 
-    SQLALCHEMY_DATABASE_URI = uri
-    SQLALCHEMY_TRACK_MODIFICATIONS = False
+        SQLALCHEMY_DATABASE_URI = uri
 
 
 # Configuration Settings for Development
