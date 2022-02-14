@@ -30,8 +30,9 @@ class Companies(db.Model):
     year = db.Column(db.Integer)
     company_size = db.Column(db.Enum(Sizes, values_callable=lambda x: [
                              str(member.value) for member in Sizes]))
+    city = db.relationship('Cities', backref='company', lazy='joined')
     meta = db.relationship('Meta', secondary=companies_meta,
-                           lazy='dynamic', backref=db.backref('company', lazy=True))
+                           lazy='dynamic', backref=db.backref('company', lazy='dynamic'))
 
     def __repr__(self):
         return '<Company ID: {}>'.format(self.company_id)
@@ -60,7 +61,6 @@ class Cities(db.Model):
     city_name = db.Column(db.String(64))
     region = db.Column(db.Enum(Regions, values_callable=lambda x: [
                        str(member.value) for member in Regions]))
-    company = db.relationship('Companies', backref='city', lazy='dynamic')
 
     def __repr__(self):
         return '<City ID: {}>'.format(self.city_id)

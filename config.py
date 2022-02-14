@@ -45,3 +45,4 @@ class DevelopmentConfig(Config):
     DEBUG = True
     DEVELOPMENT = True
     SQLALCHEMY_DATABASE_URI = DB_URL
+    SQLALCHEMY_ECHO = True
