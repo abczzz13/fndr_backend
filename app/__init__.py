@@ -5,31 +5,23 @@ from flask_migrate import Migrate
 from config import Config
 # from flask_restful import Resource, Api
 
-'''
-The Application Factory way:
 
+# The Application Factory way:
 db = SQLAlchemy()
 migrate = Migrate()
 
 
-def create app(config_class=Config):
+# Create the App
+def create_app(config_class=Config):
     app = Flask(__name__)
     env_config = os.environ.get("APP_SETTINGS") or "config.DevelopmentConfig"
     app.config.from_object(env_config)
 
+    # Initialize
     db.init_app(app)
     migrate.init_app(app, db)
 
-    return app
+    with app.app_context():
+        from app import routes, models
 
-
-'''
-
-app = Flask(__name__)
-env_config = os.environ.get("APP_SETTINGS") or "config.DevelopmentConfig"
-app.config.from_object(env_config)
-db = SQLAlchemy(app)
-migrate = Migrate(app, db)
-
-
-from app import routes, models
+        return app

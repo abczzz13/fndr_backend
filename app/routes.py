@@ -1,9 +1,9 @@
 from flask import jsonify
+'''
 from app import app
 '''
-The Application Factory way:
 from app import current_app as app
-'''
+from app import db
 from app.models import Companies, Cities, Meta, companies_meta
 
 
