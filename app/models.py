@@ -12,10 +12,10 @@ class Sizes(enum.Enum):
 
 # Many to Many table for Companies and Meta
 companies_meta = db.Table('companies_meta',
-                          db.Column('meta_id', db.Integer, db.ForeignKey(
-                              'meta.meta_id'), primary_key=True),
                           db.Column('company_id', db.Integer, db.ForeignKey(
-                              'companies.company_id'), primary_key=True)
+                              'companies.company_id'), primary_key=True, index=True),
+                          db.Column('meta_id', db.Integer, db.ForeignKey(
+                              'meta.meta_id'), primary_key=True)
                           )
 
 
@@ -31,8 +31,9 @@ class Companies(db.Model):
     company_size = db.Column(db.Enum(Sizes, values_callable=lambda x: [
                              str(member.value) for member in Sizes]))
     city = db.relationship('Cities', backref='company', lazy='joined')
-    meta = db.relationship('Meta', secondary=companies_meta,
-                           lazy='dynamic', backref=db.backref('company', lazy='dynamic'))
+    metas = db.relationship('Meta', secondary=companies_meta,
+                            lazy='dynamic', backref=db.backref('company', lazy='dynamic'))
+    # metas = db.relationship('meta', secondary=companies_meta, back_populates="companies")
 
     def __repr__(self):
         return '<Company ID: {}>'.format(self.company_id)
@@ -80,6 +81,7 @@ class Meta(db.Model):
     type = db.Column(db.Enum(Types, values_callable=lambda x: [
         str(member.value) for member in Types]))
     meta_string = db.Column(db.String(120))
+    # companies = db.relationship('Companies', secondary = companies_meta, back_populates = "metas")
 
     def __repr__(self):
         return '<Meta ID {}>'.format(self.meta_id)

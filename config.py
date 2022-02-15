@@ -47,3 +47,21 @@ class DevelopmentConfig(Config):
     DEVELOPMENT = True
     SQLALCHEMY_DATABASE_URI = DB_URL
     SQLALCHEMY_ECHO = True
+
+
+class TestConfig(Config):
+
+    # Creating the Database URI
+    POSTGRES_URL = os.environ.get("POSTGRES_URL")
+    POSTGRES_USER = os.environ.get("POSTGRES_USER")
+    POSTGRES_PW = os.environ.get("POSTGRES_PW")
+    POSTGRES_DB = "fndr_backend_test"
+    DB_URL = "postgresql+psycopg2://{user}:{pw}@{url}/{db}".format(
+        user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
+
+    DEBUG = True
+    DEVELOPMENT = True
+    SQLALCHEMY_DATABASE_URI = DB_URL
+    SQLALCHEMY_ECHO = True
+
+    TESTING = True
