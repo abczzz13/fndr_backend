@@ -17,4 +17,4 @@ def test_companies_page(client):
     assert data[0]["city_name"] == "Rotterdam"
     # assert data[692]["company_id"] == 693
 '''
-#app = test_client.__dict__['application']
+#app = client.__dict__['application']

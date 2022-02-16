@@ -6,13 +6,13 @@ from app.models import Companies, Cities, Meta, companies_meta
 Run within Flask Shell
 Run the following commands in the Flask Shell:
 from import_data_v2 import import_data
-import_data()
+import_data('db.json')
 '''
 
 
 # Function to insert meta data
 # Example insert_meta(agency['disciplines'], 'Discipline', company_id)
-def import_data():
+def import_data(import_file):
     def insert_meta(input, type, company_id):
         if input is not None:
             # Iterate over the meta type
@@ -43,9 +43,6 @@ def import_data():
                     print(
                         f"Company ID ({company_id}) has duplicate meta ({meta_id})")
         return
-
-    # Variables
-    import_file = 'db.json'
 
     # Opening JSON file
     with open(import_file) as file:

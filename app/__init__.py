@@ -16,6 +16,7 @@ migrate = Migrate()
 def create_app(config_class=Config):
     app = Flask(__name__)
     env_config = os.environ.get("APP_SETTINGS") or "config.DevelopmentConfig"
+    # env_config = "config.TestConfig"
     app.config.from_object(env_config)
     # pdb.set_trace()
     # Initialize

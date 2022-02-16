@@ -1,7 +1,7 @@
 from app.models import Companies, Cities, Meta, companies_meta
 
 
-def test_new_company(test_client, init_testdb):
+def test_new_company(client, init_testdb):
     """
     GIVEN a Companies model
     WHEN a new company is created
@@ -18,7 +18,7 @@ def test_new_company(test_client, init_testdb):
     assert company.company_size == "11-50"
 
 
-def test_new_city(test_client, init_testdb):
+def test_new_city(client, init_testdb):
     """
     GIVEN a Cities model
     WHEN a new city is created
@@ -31,7 +31,7 @@ def test_new_city(test_client, init_testdb):
     assert city.region == "Noord-Holland"
 
 
-def test_new_meta(test_client, init_testdb):
+def test_new_meta(client, init_testdb):
     """
     GIVEN a Meta model
     WHEN a new meta is created
