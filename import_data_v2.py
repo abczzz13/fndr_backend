@@ -53,34 +53,36 @@ def import_data():
         # returns JSON object as
         # a dictionary
         data = json.load(file)
+        cities = {}
 
         # Iterating through the agencies in the json file
         for agency in data['agencies']:
 
-            # Check if the city is already in the Cities table
-            city_check = Cities.query.filter_by(
-                city_name=agency['city']).first()
-
-            # Add the city if city not in Cities table
-            if city_check is None:
-
-                # Create the insert for the Cities table and add it
+            # Check if the city is already in the cities dict
+            if agency['city'] not in cities.values():
+                # If city is not in the cities dict, add the city and company to the DB
                 city_insert = Cities(
                     city_name=agency['city'], region=agency['region'])
+                company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'],
+                                           website=agency['website'], year=agency['yearEstablished'], company_size=agency['companySize'])
+                city_insert.company.append(company_insert)
                 db.session.add(city_insert)
                 db.session.commit()
 
-                # Query the newly added city from the Cities table
-                city_check = city_insert
+                # Add the city_id and city_name to the cities dict:
+                cities[city_insert.city_id] = city_insert.city_name
 
-            # Get the city_id for the Companies table if the city was already in the table or just added to the table
-            city_id = city_check.city_id
+            # If city is in the cities dict, add the company with the city_id from the cities dict to the DB
+            else:
+                # Get the city_id
+                city_id = [k for k, v in cities.items() if v ==
+                           agency['city']][0]
 
-            # Create the insert for the company in the Companies table and add it
-            company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'], city_id=city_id,
-                                       website=agency['website'], year=agency['yearEstablished'], company_size=agency['companySize'])
-            db.session.add(company_insert)
-            db.session.commit()
+                # Insert the company into the DB
+                company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'], city_id=city_id,
+                                           website=agency['website'], year=agency['yearEstablished'], company_size=agency['companySize'])
+                db.session.add(company_insert)
+                db.session.commit()
 
             # Insert meta information with insert_meta() function
             insert_meta(agency['disciplines'], 'Discipline',

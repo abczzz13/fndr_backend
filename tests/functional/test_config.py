@@ -1,13 +1,15 @@
 import os
-from flask import current_app
+# from flask import current_app
+import pdb
 
-
+'''
 def test_testing_config(test_client):
     """
     GIVEN a Flask application configured for testing
     WHEN the configuration for testing is requested
     THEN check that the configuratuon is valid
     """
+    pdb.set_trace()
     test_client.config.from_object('TestConfig')
     assert test_client.config['DEBUG']
     assert test_client.config['TESTING']
@@ -40,3 +42,4 @@ def test_production_config(app):
     assert not app.config['TESTING']
     assert app.config['SQLALCHEMY_DATABASE_URI'] == os.environ.get(
         'DATABASE_URL')
+'''

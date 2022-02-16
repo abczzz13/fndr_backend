@@ -2,18 +2,12 @@ import pytest
 from app import create_app, db
 from config import TestConfig
 from app.models import Companies, Cities, Meta, companies_meta
+import pdb
 
 
 @pytest.fixture(scope='module')
-def test_client():
+def client():
 
-    flask_app = create_app()
-
-    testing_client = flask_app.test_client()
-
-    return testing_client
-
-    '''
     flask_app = create_app(TestConfig)
 
     # Create a test client
@@ -22,7 +16,6 @@ def test_client():
         # Establish the application context
         with flask_app.app_context():
             yield test_client
-    '''
 
 
 @pytest.fixture(scope='module')
