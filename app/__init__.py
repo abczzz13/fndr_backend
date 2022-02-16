@@ -34,6 +34,6 @@ def create_app(config_class=Config):
     app.register_blueprint(api_bp, url_prefix="/api")
 
     with app.app_context():
-        from app import routes, models
+        from app import routes, models, errors
         # pdb.set_trace()
         return app

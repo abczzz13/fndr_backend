@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        {% if title %}
+        <title>{{ title }} - FNDR</title>
+        {% else %}
+        <title>Welcome to FNDR app</title>
+        {% endif %}
+    </head>
+    <body>
+        {% block content %}{% endblock %}
+    </body>
+</html>
