@@ -38,6 +38,30 @@ class Companies(db.Model):
     def __repr__(self):
         return '<Company ID: {}>'.format(self.company_id)
 
+    def to_dict(self):
+        data = {
+            'company_id': self.company_id,
+            'company_name': self.company_name,
+            'logo_image_src': self.logo_image_src,
+            'city_name': self.city.city_name,
+            'website': self.website,
+            'year': self.year,
+            'company_size': self.company_size.value,
+            'region': self.city.region.value,
+            'disciplines': [],
+            'tags': [],
+            'branches': []
+        }
+        # Iterating over all the meta id's to fill the discipline/tags/branches lists
+        for meta in self.metas:
+            if meta.type.value == "Discipline":
+                data['disciplines'].append(meta.meta_string)
+            elif meta.type.value == "Tag":
+                data['tags'].append(meta.meta_string)
+            elif meta.type.value == "Branch":
+                data['branches'].append(meta.meta_string)
+        return data
+
 
 # Regions enum for cities.region
 class Regions(enum.Enum):
