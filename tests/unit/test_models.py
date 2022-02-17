@@ -1,7 +1,7 @@
 from app.models import Companies, Cities, Meta, companies_meta
 
 
-def test_new_company(client, init_testdb):
+def test_companies_model(client, init_testdb):
     """
     GIVEN a Companies model
     WHEN a new company is created
@@ -10,7 +10,6 @@ def test_new_company(client, init_testdb):
     company = Companies(company_name="Testing Company", logo_image_src="http://www.testing.com/image.png",
                         website="http://www.testing.com", year="2021", company_size="11-50")
 
-    # assert company.company_id != None
     assert company.company_name == "Testing Company"
     assert company.logo_image_src == "http://www.testing.com/image.png"
     assert company.website == "http://www.testing.com"
@@ -18,7 +17,7 @@ def test_new_company(client, init_testdb):
     assert company.company_size == "11-50"
 
 
-def test_new_city(client, init_testdb):
+def test_cities_model(client, init_testdb):
     """
     GIVEN a Cities model
     WHEN a new city is created
@@ -26,12 +25,11 @@ def test_new_city(client, init_testdb):
     """
     city = Cities(city_name="Verzonnen Stad", region="Noord-Holland")
 
-    # assert city.city_id != None
     assert city.city_name == "Verzonnen Stad"
     assert city.region == "Noord-Holland"
 
 
-def test_new_meta(client, init_testdb):
+def test_meta_model(client, init_testdb):
     """
     GIVEN a Meta model
     WHEN a new meta is created
@@ -39,6 +37,5 @@ def test_new_meta(client, init_testdb):
     """
     meta = Meta(type="Discipline", meta_string="Application Testing")
 
-    # assert meta.meta_id != None
     assert meta.type == "Discipline"
     assert meta.meta_string == "Application Testing"
