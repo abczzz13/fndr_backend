@@ -1,5 +1,32 @@
 from app import db
+from flask import url_for
 import enum
+
+
+# Pagination mixin Class
+class PaginationAPIMixin(object):
+    @staticmethod
+    def to_collection_dict(query, page, per_page, endpoint, **kwargs):
+        resources = query.paginate(page, per_page, False)
+        data = {
+            # Making a dictionary of the query results
+            'items': [item.to_dict() for item in resources.items],
+            # Meta information about the number of records, pages, etc.
+            '_meta': {
+                'page': page,
+                'per_page': per_page,
+                'total_pages': resources.pages,
+                'total_items': resources.total
+            },
+            # Links to current/next/previous/ pages
+            '_links': {
+                'self': url_for(endpoint, page=page, per_page=per_page, **kwargs),
+                'next': url_for(endpoint, page=page + 1, per_page=per_page, **kwargs) if resources.has_next else None,
+                'previous': url_for(endpoint, page=page - 1, per_page=per_page, **kwargs) if resources.has_prev else None
+            }
+
+        }
+        return data
 
 
 # Sizes enum for companies.company_size
@@ -19,7 +46,7 @@ companies_meta = db.Table('companies_meta',
                           )
 
 
-class Companies(db.Model):
+class Companies(PaginationAPIMixin, db.Model):
     __tablename__ = 'companies'
 
     company_id = db.Column(db.Integer, primary_key=True)
@@ -37,6 +64,9 @@ class Companies(db.Model):
 
     def __repr__(self):
         return '<Company ID: {}>'.format(self.company_id)
+
+    def city_name(self):
+        self.city_name = self.city.city_name
 
     def to_dict(self):
         data = {
