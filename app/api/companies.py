@@ -1,4 +1,4 @@
-from importlib.metadata import packages_distributions
+# from importlib.metadata import packages_distributions
 from flask import jsonify, request, url_for, abort
 from app import db
 from app.models import Companies, Cities, Meta, companies_meta
