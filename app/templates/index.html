@@ -1,0 +1,5 @@
+{% extends "base.html" %} {% block content %}
+<h1>Under Construction</h1>
+{% if current_user.is_authenticated %}
+<h2>Welcome, {{ current_user.username }}!</h2>
+{% endif %} {% endblock %}

@@ -8,6 +8,25 @@
         {% endif %}
     </head>
     <body>
-        {% block content %}{% endblock %}
+        <nav>
+            FNDR:
+            <a href="{{ url_for('main.index') }}">Home</a>
+            {% if current_user.is_anonymous %}
+            <a href="{{ url_for('auth.login') }}">Login</a>
+            {% else %}
+            <a href="{{ url_for('main.user', username=current_user.username) }}"
+                >Profile</a
+            >
+            <a href="{{ url_for('auth.logout') }}">Logout</a>
+            {% endif %}
+        </nav>
+        <hr />
+        {% with messages = get_flashed_messages() %} {% if messages %}
+        <ul>
+            {% for message in messages %}
+            <li>{{ message }}</li>
+            {% endfor %}
+        </ul>
+        {% endif %} {% endwith %} {% block content %}{% endblock %}
     </body>
 </html>

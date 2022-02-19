@@ -1,4 +1,3 @@
-# from importlib.metadata import packages_distributions
 from flask import jsonify, request, url_for, abort
 from app import db
 from app.models import Companies, Cities, Meta, companies_meta
@@ -38,19 +37,33 @@ def test_query():
         city_ids = Cities.query.filter_by(region=region)
         companies = []
         for id in city_ids:
-            company = Companies.query.filter_by(city_id=id.city_id)
-            companies.append(company)
+            list_companies = Companies.query.filter_by(city_id=id.city_id)
+            for company in list_companies:
+                companies.append(company)
     else:
         companies = Companies.query.all()
     return jsonify([company.to_dict() for company in companies])
 
 
-# TODO: Looking into pagination
 @bp.route('pagination', methods=['GET'])
 def test_pagination():
     page = request.args.get('page', 1, type=int)
     per_page = min(request.args.get('per_page', 10, type=int), 100)
     companies = Companies.to_collection_dict(
         Companies.query, page, per_page, 'api.test_pagination')
-    # companies = Companies.query.paginate(page, 25, False)
     return jsonify(companies)
+
+
+@bp.route('like', methods=['GET'])
+def test_like():
+    city_like = request.args.get('city_like')
+    # result = session.query(Customers).filter(Customers.name.like('Ra%'))
+    city_ids = Cities.query.filter(
+        Cities.city_name.like('%' + city_like + '%'))
+    # city_ids = Cities.query.like(city_name=city_like)
+    companies = []
+    for id in city_ids:
+        list_companies = Companies.query.filter_by(city_id=id.city_id)
+        for company in list_companies:
+            companies.append(company)
+    return jsonify([company.to_dict() for company in companies])
