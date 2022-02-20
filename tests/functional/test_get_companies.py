@@ -13,7 +13,7 @@ def test_get_companies(client, init_testdb, insert_data_db):
     data = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 200
-    # assert len(data) == 15
+    assert len(data['items']) == 15
     assert isinstance(data['items'][0]["city_name"], str)
     assert isinstance(data['items'][0]["company_id"], int)
 
@@ -28,7 +28,8 @@ def test_get_companies_pagination(client, init_testdb, insert_data_db):
     response2 = client.get("/api/v1/companies?page=2")
     data1 = json.loads(response1.get_data(as_text=True))
     data2 = json.loads(response2.get_data(as_text=True))
-
+    # TODO: Somehow the data gets unsorted somewhere... in a consistently way, ie company_id 20 is always the first record
+    pdb.set_trace()
     assert response2.status_code == 200
     assert len(data2['items']) == 5
     assert data1['items'][0]['company_id'] != data2['items'][0]['company_id']
@@ -46,7 +47,7 @@ def test_get_companies_city_like(client, init_testdb, insert_data_db):
     data = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 200
-    assert len(data) == 7
+    assert len(data['items']) == 7
 
 
 def test_get_companies_size(client, init_testdb, insert_data_db):
@@ -55,11 +56,11 @@ def test_get_companies_size(client, init_testdb, insert_data_db):
     WHEN the '/api/companies' is requested with a size=11-50 parameter
     THEN the response will contain 5 records and their associated data
     """
-    response = client.get("/api/v1/companies?size=11-50")
+    response = client.get("/api/v1/companies?size=11-50&per_page=20")
     data = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 200
-    assert len(data) == 5
+    assert len(data['items']) == 19
 
 
 def test_get_multiple_parameters(client, init_testdb, insert_data_db):
@@ -68,8 +69,8 @@ def test_get_multiple_parameters(client, init_testdb, insert_data_db):
     WHEN the '/api/companies' is requested with a size=11-50 and city=Rotterdam parameters
     THEN the response will contain 2 records and their associated data
     """
-    response = client.get("/api/v1/companies?size=11-50&city=Rotterdam")
+    response = client.get("/api/v1/companies?size=GT-100&city=Rijnsburg")
     data = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 200
-    assert len(data) == 2
+    assert len(data['items']) == 1

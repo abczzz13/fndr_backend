@@ -7,4 +7,4 @@ def test_index(client):
 
     response = client.get("/")
     assert response.status_code == 200
-    assert b"Under construction" in response.data
+    assert b"<h1>Under Construction</h1>" in response.data
