@@ -1,7 +1,9 @@
+from itertools import filterfalse
 from flask import jsonify, request, url_for, abort
 from app import db
 from app.models import Companies, Cities, Meta, companies_meta
 from app.api import bp
+from sqlalchemy import func
 # from app.api.errors import bad_request
 # TODO: Looking into errors, validation and bad requests
 
@@ -45,7 +47,7 @@ def test_query():
     return jsonify([company.to_dict() for company in companies])
 
 
-@bp.route('pagination', methods=['GET'])
+@bp.route('/pagination', methods=['GET'])
 def test_pagination():
     page = request.args.get('page', 1, type=int)
     per_page = min(request.args.get('per_page', 10, type=int), 100)
@@ -54,7 +56,7 @@ def test_pagination():
     return jsonify(companies)
 
 
-@bp.route('like', methods=['GET'])
+@bp.route('/like', methods=['GET'])
 def test_like():
     city_like = request.args.get('city_like')
     # result = session.query(Customers).filter(Customers.name.like('Ra%'))
@@ -67,3 +69,46 @@ def test_like():
         for company in list_companies:
             companies.append(company)
     return jsonify([company.to_dict() for company in companies])
+
+
+@bp.route("/v1/companies", methods=["GET"])
+def api_v1_companies():
+    param_dict = request.args.to_dict()
+    page = 1
+    per_page = 15
+    query = Companies.query.join(Cities)
+
+    # Implement validation?
+    for parameter in param_dict:
+        if parameter == "city":
+            # find a solution for how to query efficiently for city_name and from there also the addition of a city_like parameter
+            query = query.filter(Cities.city_name == param_dict[parameter])
+        if parameter == "city_like":
+            query = query.filter(Cities.city_name.like(
+                "%" + param_dict[parameter] + "%"))
+        if parameter == "region":
+            # find a solution for how to query efficiently for city_name and from there also the addition of a city_like parameter
+            query = query.filter(Cities.region == param_dict[parameter])
+        if parameter == "size":
+            query = query.filter(Companies.company_size ==
+                                 str(param_dict[parameter]))
+        if parameter == "year":
+            query = query.filter(Companies.year ==
+                                 param_dict[parameter])
+        if parameter == "tag":
+            # TODO: implement filter by meta tags, branches, disciplines
+            pass
+        if parameter == "order_by":
+            # TODO: implement order by
+            pass
+        if parameter == "page":
+            page = int(param_dict[parameter])
+        if parameter == "per_page":
+            per_page = int(param_dict[parameter])
+
+    # Add pagination
+    companies = Companies.to_collection_dict(
+        query, page, per_page, 'api.api_v1_companies')
+    # Still need to fix the links in the to_collection_dict method
+
+    return jsonify(companies)

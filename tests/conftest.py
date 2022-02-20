@@ -33,4 +33,4 @@ def init_testdb(client):
 
 @pytest.fixture(scope='module')
 def insert_data_db(client, init_testdb):
-    import_data('test.json')
+    import_data('test_db.json')
