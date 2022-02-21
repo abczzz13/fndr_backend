@@ -1,22 +1,22 @@
 import os
 import re
-import pdb
+from datetime import timedelta
 from dotenv import load_dotenv
 
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
+ACCESS_EXPIRES = timedelta(hours=1)
+
 
 # Configuration Settings
-# https://realpython.com/flask-by-example-part-1-project-setup/
-# How to set up the environment variables (APP_SETTINGS / SECRET_KEY) in the above link
-
-
 class Config():
     DEBUG = False
     DEVELOPMENT = False
     CSRF_ENABLED = True
-    SECRET_KEY = os.environ.get("SECRET_KEY") or "you-will-never-guess"
+    SECRET_KEY = os.environ.get("SECRET_KEY")
+    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+    JWT_ACCESS_TOKEN_EXPIRES = ACCESS_EXPIRES
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     TESTING = False
     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')

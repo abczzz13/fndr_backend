@@ -22,6 +22,7 @@ class PaginationAPIMixin(object):
                 'total_items': resources.total
             },
             # Links to current/next/previous/ pages
+            # TODO: Update urls to include query parameters
             '_links': {
                 'self': url_for(endpoint, page=page, per_page=per_page, **kwargs),
                 'next': url_for(endpoint, page=page + 1, per_page=per_page, **kwargs) if resources.has_next else None,
@@ -67,9 +68,9 @@ class Sizes(enum.Enum):
 # Many to Many table for Companies and Meta
 companies_meta = db.Table('companies_meta',
                           db.Column('company_id', db.Integer, db.ForeignKey(
-                              'companies.company_id'), primary_key=True, index=True),
+                              'companies.company_id'), index=True),
                           db.Column('meta_id', db.Integer, db.ForeignKey(
-                              'meta.meta_id'), primary_key=True)
+                              'meta.meta_id'))
                           )
 
 
@@ -86,7 +87,7 @@ class Companies(PaginationAPIMixin, db.Model):
                              str(member.value) for member in Sizes]))
     city = db.relationship('Cities', backref='company', lazy='joined')
     metas = db.relationship('Meta', secondary=companies_meta,
-                            lazy='dynamic', backref=db.backref('company', lazy='dynamic'))
+                            lazy='dynamic', backref=db.backref('meta', lazy='dynamic'))
     # metas = db.relationship('meta', secondary=companies_meta, back_populates="companies")
 
     def __repr__(self):
@@ -119,6 +120,42 @@ class Companies(PaginationAPIMixin, db.Model):
                 data['branches'].append(meta.meta_string)
         return data
 
+    def from_dict(self, data, new_company=False):
+        # Add Companies fields
+        for field in ["company_name", "logo_image_src", "website", "year", "company_size"]:
+            if field in data:
+                setattr(self, field, data[field])
+
+        # Check if city is already in Cities table, otherwise add it
+        # TODO:
+        if "city_name" in data:
+            city = Cities.query.filter_by(city_name=data["city_name"]).first()
+            if city == 0:
+                new_city = Cities(
+                    city_name=data["city_name"], region=data["region"])
+                self.city.append(new_city)
+            # setattr probably wont work because of Cities table?
+            else:
+                setattr(self, "city_id", city.city_id)
+                setattr(self, "city_name", city.city_name)
+                setattr(self, "region", city.region)
+            # setattr probably wont work because of Cities table?
+
+        # Check if the disciplines, branches, tags already in Meta table, otherwise add it
+        # TODO:
+        for field in ["disciplines", "branches", "tags"]:
+            if field in data:
+                # another for loop to iterate over multiple meta_strings?
+                for item in data:
+                    pass
+                # Probably not going to work as the enums is case sensitive
+                meta = Meta.query.filter_by(
+                    meta_string=data[field], type=field).first()
+                if meta == 0:
+                    new_meta = Meta(meta_string=data[field], type=field)
+                    self.metas.append(new_meta)
+                self.metas.append(meta)
+
 
 # Regions enum for cities.region
 class Regions(enum.Enum):
@@ -149,6 +186,7 @@ class Cities(db.Model):
 
 
 # Types enum for meta.type
+# TODO: change to respectively "disciplines", "branches", "tags"
 class Types(enum.Enum):
     ONE = 'Discipline'
     TWO = 'Branch'

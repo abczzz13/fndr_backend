@@ -4,6 +4,7 @@ from flask import Flask, current_app
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
+from flask_jwt_extended import JWTManager
 from config import Config
 from logging.handlers import RotatingFileHandler
 import pdb
@@ -13,6 +14,7 @@ import pdb
 # The Application Factory way:
 db = SQLAlchemy()
 migrate = Migrate()
+jwt = JWTManager()
 login = LoginManager()
 login.login_view = "auth.login"
 login.login_message = ('Please log in to access this page.')
@@ -29,6 +31,7 @@ def create_app(config_class=Config):
     db.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
+    jwt.init_app(app)
 
     # Registering the Blueprints
     from app.api import bp as api_bp
