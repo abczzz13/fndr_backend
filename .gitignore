@@ -158,4 +158,4 @@ cython_debug/
 /dump.rdb
 
 # specific to this project: ignore the db.json
-db.json
+# db.json

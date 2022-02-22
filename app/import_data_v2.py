@@ -11,7 +11,7 @@ import_data('db.json')
 
 
 # Function to insert meta data
-# Example insert_meta(agency['disciplines'], 'Discipline', company_id)
+# Example insert_meta(agency['disciplines'], 'disciplines', company_id)
 def import_data(import_file):
     def insert_meta(input, type, company_id):
         if input is not None:
