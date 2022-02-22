@@ -4,7 +4,6 @@ from flask_jwt_extended import create_access_token, jwt_required
 from app import db, cache
 from app.models import Companies, Cities, Meta, companies_meta, Users
 from app.api import bp
-from sqlalchemy import func
 from app.api.errors import bad_request, error_response
 # TODO: Looking into errors, validation and bad requests
 
