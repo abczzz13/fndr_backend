@@ -1,6 +1,8 @@
+from app.models import Users
 import pytest
 from app import create_app, db
 from app.import_data_v2 import import_data
+from flask_login import login_user
 from config import TestConfig
 
 
@@ -34,3 +36,29 @@ def init_testdb(client):
 @pytest.fixture(scope='module')
 def insert_data_db(client, init_testdb):
     import_data('test_db.json')
+
+
+@pytest.fixture(scope='module')
+def new_user(client, init_testdb):
+    new_user = Users(username="Test User", email="test@fnder-backend.com")
+    new_user.set_password("testtest")
+
+    db.session.add(new_user)
+    db.session.commit()
+
+    return new_user
+
+
+@pytest.fixture(scope='module')
+def login_users(client, init_testdb, new_user):
+
+    with client.test_request_context():
+
+        username = "Test User"
+        password = "testtest"
+
+        user = Users.query.filter_by(username=username).first()
+
+        if user is not None and user.check_password(password):
+
+            yield login_user(new_user, remember=False)

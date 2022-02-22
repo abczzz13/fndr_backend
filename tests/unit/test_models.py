@@ -1,4 +1,3 @@
-from email.headerregistry import UniqueSingleAddressHeader
 from app.models import Companies, Cities, Meta, companies_meta, Users
 
 
@@ -42,15 +41,13 @@ def test_meta_model(client, init_testdb):
     assert meta.meta_string == "Application Testing"
 
 
-def test_users_model(client, init_testdb):
+def test_users_model(client, init_testdb, new_user):
     """
     GIVEN a Users model
     WHEN a new user is created
     THEN check the username, email, password
     """
-    user = Users(username="Test User", email="test@fnder-backend.com")
-    user.set_password("testtest")
 
-    assert user.username == "Test User"
-    assert user.email == "test@fnder-backend.com"
-    assert user.check_password("testtest")
+    assert new_user.username == "Test User"
+    assert new_user.email == "test@fnder-backend.com"
+    assert new_user.check_password("testtest")

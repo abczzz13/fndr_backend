@@ -154,5 +154,8 @@ cython_debug/
 # Flask Env
 .flaskenv
 
+# Ignore Redis writes to disk
+/dump.rdb
+
 # specific to this project: ignore the db.json
 db.json
