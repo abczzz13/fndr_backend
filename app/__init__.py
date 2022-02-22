@@ -69,8 +69,7 @@ def create_app(config_class=Config):
         app.logger.info('FNDR startup')
 
     # Returning app with context
-    # with app.app_context():
-    app.app_context().push()
-    from app import models
+    with app.app_context():
+        from app import models
 
-    return app
+        return app
