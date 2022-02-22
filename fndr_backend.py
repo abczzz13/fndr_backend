@@ -6,7 +6,7 @@ import os
 import config
 
 config_variables = config.DevelopmentConfig
-if os.environ.get("FLASK_ENV") == "production":
+if os.environ.get('FLASK_ENV') == 'production':
     config_variables = config.ProductionConfig
 # pdb.set_trace()
 app = create_app(config_class=config_variables)

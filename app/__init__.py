@@ -16,7 +16,7 @@ migrate = Migrate()
 jwt = JWTManager()
 login = LoginManager()
 cache = Cache()
-login.login_view = "auth.login"
+login.login_view = 'auth.login'
 login.login_message = ('Please log in to access this page.')
 
 
@@ -36,10 +36,10 @@ def create_app(config_class=Config):
 
     # Registering the Blueprints
     from app.api import bp as api_bp
-    app.register_blueprint(api_bp, url_prefix="/api")
+    app.register_blueprint(api_bp, url_prefix='/api')
 
     from app.auth import bp as auth_bp
-    app.register_blueprint(auth_bp, url_prefix="/auth")
+    app.register_blueprint(auth_bp, url_prefix='/auth')
 
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)

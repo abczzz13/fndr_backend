@@ -14,13 +14,13 @@ def before_request():
         db.session.commit()
 
 
-@bp.route("/")
-@bp.route("/index")
+@bp.route('/')
+@bp.route('/index')
 def index():
-    return render_template("index.html", title="Home")
+    return render_template('index.html', title='Home')
 
 
-@bp.route("/user/<username>", methods=["GET", "POST"])
+@bp.route('/user/<username>', methods=['GET', 'POST'])
 @login_required
 def user(username):
     form = EditProfileForm(current_user.username)
@@ -29,9 +29,9 @@ def user(username):
         current_user.username = form.username.data
         db.session.commit()
         flash("Your changes have been saved.")
-        return redirect(url_for("main.index"))
+        return redirect(url_for('main.index'))
     elif request.method == 'GET':
         form.username.data = current_user.username
 
     user = Users.query.filter_by(username=username).first_or_404()
-    return render_template("user.html", title="User Profile", user=user, form=form)
+    return render_template('user.html', title='User Profile', user=user, form=form)

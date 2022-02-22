@@ -68,11 +68,11 @@ def test_like():
 '''
 
 
-@bp.route("/v1/token", methods=["POST"])
+@bp.route('/v1/token', methods=['POST'])
 def create_token():
     # Get User credentials from POST
-    username = request.json.get("username", None)
-    password = request.json.get("password", None)
+    username = request.json.get('username', None)
+    password = request.json.get('password', None)
 
     # Lookup user from DB and check credentials, return error if not valid
     user = Users.query.filter_by(username=username).first()
@@ -81,10 +81,10 @@ def create_token():
 
     # Create and return token if credentials are valid
     access_token = create_access_token(identity=user.id)
-    return jsonify({"token": access_token, "user_id": user.id})
+    return jsonify({'token': access_token, 'user_id': user.id})
 
 
-@bp.route("v1/token", methods=["DELETE"])
+@bp.route('v1/token', methods=['DELETE'])
 @jwt_required()
 def revoke_token():
     pass
@@ -95,7 +95,7 @@ def get_company(id):
     return jsonify(Companies.query.get_or_404(id).to_dict())
 
 
-@bp.route("/v1/companies", methods=["GET"])
+@bp.route('/v1/companies', methods=['GET'])
 @cache.cached(timeout=30, query_string=True)
 def get_companies():
     # Get the parameters from request
@@ -104,8 +104,8 @@ def get_companies():
     # Variables
     page = 1
     per_page = 15
-    parameters = ["company", "company_like", "city", "city_id", "city_like", "region",
-                  "size", "year", "page", "per_page", "filter_by"]
+    parameters = ['company', 'company_like', 'city', 'city_id', 'city_like', 'region',
+                  'size', 'year', 'page', 'per_page', 'filter_by']
     query = Companies.query.join(Cities)
 
     # Implement validation?
@@ -115,38 +115,38 @@ def get_companies():
         if parameter not in parameters:
             # TODO: What to with errors?
             pass
-        if parameter == "company":
+        if parameter == 'company':
             query = query.filter(Companies.company_name ==
                                  param_dict[parameter])
-        if parameter == "company_like":
+        if parameter == 'company_like':
             query = query.filter(Companies.company_name.ilike(
-                "%" + param_dict[parameter] + "%"))
-        if parameter == "city":
+                '%' + param_dict[parameter] + '%'))
+        if parameter == 'city':
             query = query.filter(Cities.city_name == param_dict[parameter])
-        if parameter == "city_id":
+        if parameter == 'city_id':
             query = query.filter(Cities.city_id == param_dict[parameter])
-        if parameter == "city_like":
+        if parameter == 'city_like':
             query = query.filter(Cities.city_name.ilike(
-                "%" + param_dict[parameter] + "%"))
-        if parameter == "region":
+                '%' + param_dict[parameter] + '%'))
+        if parameter == 'region':
             query = query.filter(Cities.region == param_dict[parameter])
-        if parameter == "size":
+        if parameter == 'size':
             query = query.filter(Companies.company_size ==
                                  str(param_dict[parameter]))
-        if parameter == "year":
+        if parameter == 'year':
             query = query.filter(Companies.year ==
                                  param_dict[parameter])
-        if parameter == "tag":
+        if parameter == 'tag':
             # TODO: implement filter by meta tags, branches, disciplines
             #
             # query.filter()
             pass
-        if parameter == "order_by":
+        if parameter == 'order_by':
             # TODO: implement order by
             pass
-        if parameter == "page":
+        if parameter == 'page':
             page = int(param_dict[parameter])
-        if parameter == "per_page":
+        if parameter == 'per_page':
             per_page = int(param_dict[parameter])
 
     # Add pagination
@@ -158,16 +158,16 @@ def get_companies():
     return jsonify(companies)
 
 
-@bp.route("/v1/companies/", methods=["POST"])
+@bp.route('/v1/companies/', methods=['POST'])
 @jwt_required()
 def add_company():
     data = request.get_json() or {}
-    if "company_id" in data:
+    if 'company_id' in data:
         return bad_request("Create company cannot include company_id. For modifying existing companies please use the PUT method")
-    if "company_name" not in data:
+    if 'company_name' not in data:
         # TODO: Check for other required fields?
         return bad_request("Must include company_name field")
-    if Companies.query.filter_by(company_name=data["company_name"]).first():
+    if Companies.query.filter_by(company_name=data['company_name']).first():
         return bad_request("A company with that name already exists, please use another name")
     company = Companies()
     # TODO: Finalize the from_dict method
@@ -182,7 +182,7 @@ def add_company():
     # cache.delete('all_tasks')
 
 
-@bp.route("/v1/companies/<int:id>", methods=["PUT"])
+@bp.route('/v1/companies/<int:id>', methods=['PUT'])
 @jwt_required()
 def update_company():
     company = Companies.query.get_or_404(id)
@@ -197,11 +197,11 @@ def update_company():
     # cache.delete('all_tasks')
 
 
-@bp.route("/v1/companies/<int:id>", methods=["DELETE"])
+@bp.route('/v1/companies/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_company(id):
     company = Companies.query.get_or_404(id)
     db.session.delete(company)
     db.session.commit()
-    return f"company_id: {id}"
+    return f'company_id: {id}'
     # cache.delete('all_tasks')

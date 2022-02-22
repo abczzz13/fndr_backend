@@ -40,8 +40,8 @@ def insert_data_db(client, init_testdb):
 
 @pytest.fixture(scope='module')
 def new_user(client, init_testdb):
-    new_user = Users(username="Test User", email="test@fnder-backend.com")
-    new_user.set_password("testtest")
+    new_user = Users(username='Test User', email='test@fnder-backend.com')
+    new_user.set_password('testtest')
 
     db.session.add(new_user)
     db.session.commit()
@@ -54,8 +54,8 @@ def login_users(client, init_testdb, new_user):
 
     with client.test_request_context():
 
-        username = "Test User"
-        password = "testtest"
+        username = 'Test User'
+        password = 'testtest'
 
         user = Users.query.filter_by(username=username).first()
 

@@ -3,14 +3,14 @@ from flask_login import current_user
 
 
 def test_login_user(client, init_testdb, new_user, login_users):
-    """
+    '''
     GIVEN that there is a Test user registered and stored in the DB
     WHEN the user is logged in
     THEN the query for the Test user will contain valid user credentials and the user is currently logged in
-    """
+    '''
 
-    username = "Test User"
-    password = "testtest"
+    username = 'Test User'
+    password = 'testtest'
 
     user = Users.query.filter_by(username=username).first()
 

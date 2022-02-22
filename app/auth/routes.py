@@ -7,11 +7,11 @@ from app.auth.forms import LoginForm
 from app.models import Users
 
 
-@bp.route("/login", methods=["GET", "POST"])
+@bp.route('/login', methods=['GET', 'POST'])
 def login():
     # If user is already logged in redirect to home
     if current_user.is_authenticated:
-        return redirect(url_for("main.index"))
+        return redirect(url_for('main.index'))
     # Create Login form
     form = LoginForm()
 
@@ -20,18 +20,18 @@ def login():
         user = Users.query.filter_by(username=form.username.data).first()
         if user is None or not user.check_password(form.password.data):
             flash("Invalid Login credentials")
-            return redirect(url_for("auth.login"))
+            return redirect(url_for('auth.login'))
         login_user(user, remember=form.remember_me.data)
 
         # Redirecting to the next page after succesful login
-        next_page = request.args.get("next")
-        if not next_page or url_parse(next_page).netloc != "":
-            next_page = url_for("main.index")
+        next_page = request.args.get('next')
+        if not next_page or url_parse(next_page).netloc != '':
+            next_page = url_for('main.index')
         return redirect(next_page)
     return render_template('login.html', title='Login', form=form)
 
 
-@bp.route("/logout")
+@bp.route('/logout')
 def logout():
     logout_user()
-    return redirect(url_for("main.index"))
+    return redirect(url_for('main.index'))

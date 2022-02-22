@@ -14,8 +14,8 @@ class Config():
     DEBUG = False
     DEVELOPMENT = False
     CSRF_ENABLED = True
-    SECRET_KEY = os.environ.get("SECRET_KEY")
-    JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY")
+    SECRET_KEY = os.environ.get('SECRET_KEY')
+    JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
     JWT_ACCESS_TOKEN_EXPIRES = ACCESS_EXPIRES
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     TESTING = False
@@ -26,10 +26,10 @@ class Config():
 class ProductionConfig(Config):
 
     # Adjust DB URI for sqlalchemy to work with Heroku
-    if os.environ.get("DATABASE_URL") is not None:
-        uri = os.environ.get("DATABASE_URL")
-        if uri.startswith("postgres://"):
-            uri = uri.replace("postgres://", "postgresql://", 1)
+    if os.environ.get('DATABASE_URL') is not None:
+        uri = os.environ.get('DATABASE_URL')
+        if uri.startswith('postgres://'):
+            uri = uri.replace('postgres://', 'postgresql://', 1)
 
         SQLALCHEMY_DATABASE_URI = uri
 
@@ -41,11 +41,11 @@ class ProductionConfig(Config):
 class DevelopmentConfig(Config):
 
     # Creating the Postgres Database URI
-    POSTGRES_URL = os.environ.get("POSTGRES_URL")
-    POSTGRES_USER = os.environ.get("POSTGRES_USER")
-    POSTGRES_PW = os.environ.get("POSTGRES_PW")
-    POSTGRES_DB = os.environ.get("POSTGRES_DB")
-    DB_URL = "postgresql+psycopg2://{user}:{pw}@{url}/{db}".format(
+    POSTGRES_URL = os.environ.get('POSTGRES_URL')
+    POSTGRES_USER = os.environ.get('POSTGRES_USER')
+    POSTGRES_PW = os.environ.get('POSTGRES_PW')
+    POSTGRES_DB = os.environ.get('POSTGRES_DB')
+    DB_URL = 'postgresql+psycopg2://{user}:{pw}@{url}/{db}'.format(
         user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
 
     # Cache Redis DB settings
@@ -65,11 +65,11 @@ class DevelopmentConfig(Config):
 class TestConfig(Config):
 
     # Creating the Postgres Database URI
-    POSTGRES_URL = os.environ.get("POSTGRES_URL")
-    POSTGRES_USER = os.environ.get("POSTGRES_USER")
-    POSTGRES_PW = os.environ.get("POSTGRES_PW")
-    POSTGRES_DB = "fndr_backend_test"
-    DB_URL = "postgresql+psycopg2://{user}:{pw}@{url}/{db}".format(
+    POSTGRES_URL = os.environ.get('POSTGRES_URL')
+    POSTGRES_USER = os.environ.get('POSTGRES_USER')
+    POSTGRES_PW = os.environ.get('POSTGRES_PW')
+    POSTGRES_DB = 'fndr_backend_test'
+    DB_URL = 'postgresql+psycopg2://{user}:{pw}@{url}/{db}'.format(
         user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
 
     # Cache Redis DB settings

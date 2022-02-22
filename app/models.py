@@ -72,7 +72,7 @@ companies_meta = db.Table('companies_meta',
                           db.Column('meta_id', db.Integer, db.ForeignKey(
                               'meta.meta_id'))
                           )
-# TODO: implement ondelete="CASCADE" somewhere...
+# TODO: implement ondelete='CASCADE' somewhere...
 
 
 class Companies(PaginationAPIMixin, db.Model):
@@ -89,7 +89,7 @@ class Companies(PaginationAPIMixin, db.Model):
     city = db.relationship('Cities', backref='company', lazy='joined')
     metas = db.relationship('Meta', secondary=companies_meta,
                             lazy='dynamic', backref=db.backref('meta', lazy='dynamic'))
-    # metas = db.relationship('meta', secondary=companies_meta, back_populates="companies")
+    # metas = db.relationship('meta', secondary=companies_meta, back_populates='companies')
 
     def __repr__(self):
         return '<Company ID: {}>'.format(self.company_id)
@@ -113,38 +113,38 @@ class Companies(PaginationAPIMixin, db.Model):
         }
         # Iterating over all the meta id's to fill the discipline/tags/branches lists
         for meta in self.metas:
-            if meta.type.value == "Discipline":
+            if meta.type.value == 'Discipline':
                 data['disciplines'].append(meta.meta_string)
-            elif meta.type.value == "Tag":
+            elif meta.type.value == 'Tag':
                 data['tags'].append(meta.meta_string)
-            elif meta.type.value == "Branch":
+            elif meta.type.value == 'Branch':
                 data['branches'].append(meta.meta_string)
         return data
 
     def from_dict(self, data, new_company=False):
         # Add Companies fields
-        for field in ["company_name", "logo_image_src", "website", "year", "company_size"]:
+        for field in ['company_name', 'logo_image_src', 'website', 'year', 'company_size']:
             if field in data:
                 setattr(self, field, data[field])
 
         # Check if city is already in Cities table, otherwise add it
         # TODO:
-        if "city_name" in data:
-            city = Cities.query.filter_by(city_name=data["city_name"]).first()
+        if 'city_name' in data:
+            city = Cities.query.filter_by(city_name=data['city_name']).first()
             if city == 0:
                 new_city = Cities(
-                    city_name=data["city_name"], region=data["region"])
+                    city_name=data['city_name'], region=data['region'])
                 self.city.append(new_city)
             # setattr probably wont work because of Cities table?
             else:
-                setattr(self, "city_id", city.city_id)
-                setattr(self, "city_name", city.city_name)
-                setattr(self, "region", city.region)
+                setattr(self, 'city_id', city.city_id)
+                setattr(self, 'city_name', city.city_name)
+                setattr(self, 'region', city.region)
             # setattr probably wont work because of Cities table?
 
         # Check if the disciplines, branches, tags already in Meta table, otherwise add it
         # TODO:
-        for field in ["disciplines", "branches", "tags"]:
+        for field in ['disciplines', 'branches', 'tags']:
             if field in data:
                 # another for loop to iterate over multiple meta_strings?
                 for item in data:
@@ -187,7 +187,7 @@ class Cities(db.Model):
 
 
 # Types enum for meta.type
-# TODO: change to respectively "disciplines", "branches", "tags"
+# TODO: change to respectively 'disciplines', 'branches', 'tags'
 class Types(enum.Enum):
     ONE = 'Discipline'
     TWO = 'Branch'
@@ -201,7 +201,7 @@ class Meta(db.Model):
     type = db.Column(db.Enum(Types, values_callable=lambda x: [
         str(member.value) for member in Types]))
     meta_string = db.Column(db.String(120))
-    # companies = db.relationship('Companies', secondary = companies_meta, back_populates = "metas")
+    # companies = db.relationship('Companies', secondary = companies_meta, back_populates = 'metas')
 
     def __repr__(self):
         return '<Meta ID {}>'.format(self.meta_id)
