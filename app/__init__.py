@@ -5,10 +5,9 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
+from flask_caching import Cache
 from config import Config
 from logging.handlers import RotatingFileHandler
-import pdb
-# from flask_restful import Resource, Api
 
 
 # The Application Factory way:
@@ -16,6 +15,7 @@ db = SQLAlchemy()
 migrate = Migrate()
 jwt = JWTManager()
 login = LoginManager()
+cache = Cache()
 login.login_view = "auth.login"
 login.login_message = ('Please log in to access this page.')
 
@@ -32,6 +32,7 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     login.init_app(app)
     jwt.init_app(app)
+    cache.init_app(app)
 
     # Registering the Blueprints
     from app.api import bp as api_bp

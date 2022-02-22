@@ -72,6 +72,7 @@ companies_meta = db.Table('companies_meta',
                           db.Column('meta_id', db.Integer, db.ForeignKey(
                               'meta.meta_id'))
                           )
+# TODO: implement ondelete="CASCADE" somewhere...
 
 
 class Companies(PaginationAPIMixin, db.Model):

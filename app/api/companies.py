@@ -1,7 +1,7 @@
 from flask import jsonify, request, url_for, abort
 from flask_login import login_required
 from flask_jwt_extended import create_access_token, jwt_required
-from app import db
+from app import db, cache
 from app.models import Companies, Cities, Meta, companies_meta, Users
 from app.api import bp
 from sqlalchemy import func
@@ -68,7 +68,7 @@ def test_like():
 '''
 
 
-@bp.route('/v1/token', methods=['POST'])
+@bp.route("/v1/token", methods=["POST"])
 def create_token():
     # Get User credentials from POST
     username = request.json.get("username", None)
@@ -84,12 +84,19 @@ def create_token():
     return jsonify({"token": access_token, "user_id": user.id})
 
 
+@bp.route("v1/token", methods=["DELETE"])
+@jwt_required()
+def revoke_token():
+    pass
+
+
 @bp.route('/v1/companies/<int:id>', methods=['GET'])
 def get_company(id):
     return jsonify(Companies.query.get_or_404(id).to_dict())
 
 
 @bp.route("/v1/companies", methods=["GET"])
+@cache.cached(timeout=30, query_string=True)
 def get_companies():
     # Get the parameters from request
     param_dict = request.args.to_dict()
@@ -172,6 +179,7 @@ def add_company():
     response.headers['Location'] = url_for(
         'api.get_company', id=company.company_id)
     return response
+    # cache.delete('all_tasks')
 
 
 @bp.route("/v1/companies/<int:id>", methods=["PUT"])
@@ -186,9 +194,14 @@ def update_company():
     company.from_dict(data, new_company=False)
     db.session.commit()
     return jsonify(company.to_dict())
+    # cache.delete('all_tasks')
 
 
 @bp.route("/v1/companies/<int:id>", methods=["DELETE"])
 @jwt_required()
 def delete_company(id):
+    company = Companies.query.get_or_404(id)
+    db.session.delete(company)
+    db.session.commit()
     return f"company_id: {id}"
+    # cache.delete('all_tasks')

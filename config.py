@@ -33,17 +33,28 @@ class ProductionConfig(Config):
 
         SQLALCHEMY_DATABASE_URI = uri
 
+    # Heroku Redis DB
+    # CACHE_REDIS_URL = os.environ['REDIS_TLS_URL'] or os.environ['REDIS_URL']
+
 
 # Configuration Settings for Development
 class DevelopmentConfig(Config):
 
-    # Creating the Database URI
+    # Creating the Postgres Database URI
     POSTGRES_URL = os.environ.get("POSTGRES_URL")
     POSTGRES_USER = os.environ.get("POSTGRES_USER")
     POSTGRES_PW = os.environ.get("POSTGRES_PW")
     POSTGRES_DB = os.environ.get("POSTGRES_DB")
     DB_URL = "postgresql+psycopg2://{user}:{pw}@{url}/{db}".format(
         user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
+
+    # Cache Redis DB settings
+    CACHE_TYPE = os.environ['CACHE_TYPE']
+    CACHE_REDIS_HOST = os.environ['CACHE_REDIS_HOST']
+    CACHE_REDIS_PORT = os.environ['CACHE_REDIS_PORT']
+    CACHE_REDIS_DB = os.environ['CACHE_REDIS_DB']
+    CACHE_REDIS_URL = os.environ['CACHE_REDIS_URL']
+    CACHE_DEFAULT_TIMEOUT = os.environ['CACHE_DEFAULT_TIMEOUT']
 
     DEBUG = True
     DEVELOPMENT = True
@@ -53,13 +64,21 @@ class DevelopmentConfig(Config):
 
 class TestConfig(Config):
 
-    # Creating the Database URI
+    # Creating the Postgres Database URI
     POSTGRES_URL = os.environ.get("POSTGRES_URL")
     POSTGRES_USER = os.environ.get("POSTGRES_USER")
     POSTGRES_PW = os.environ.get("POSTGRES_PW")
     POSTGRES_DB = "fndr_backend_test"
     DB_URL = "postgresql+psycopg2://{user}:{pw}@{url}/{db}".format(
         user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
+
+    # Cache Redis DB settings
+    CACHE_TYPE = os.environ['CACHE_TYPE']
+    CACHE_REDIS_HOST = os.environ['CACHE_REDIS_HOST']
+    CACHE_REDIS_PORT = os.environ['CACHE_REDIS_PORT']
+    CACHE_REDIS_DB = os.environ['CACHE_REDIS_DB']
+    CACHE_REDIS_URL = os.environ['CACHE_REDIS_URL']
+    CACHE_DEFAULT_TIMEOUT = os.environ['CACHE_DEFAULT_TIMEOUT']
 
     DEBUG = True
     DEVELOPMENT = True
