@@ -1,3 +1,6 @@
 from app.import_data_v2 import import_data
+import json
+from app import db
+from app.models import Companies, Cities, Meta, companies_meta
 
 import_data('db.json')
