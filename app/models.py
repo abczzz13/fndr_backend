@@ -88,7 +88,7 @@ class Companies(PaginationAPIMixin, db.Model):
                              str(member.value) for member in Sizes]))
     city = db.relationship('Cities', backref='company', lazy='joined')
     metas = db.relationship('Meta', secondary=companies_meta,
-                            lazy='dynamic', backref=db.backref('meta', lazy='dynamic'))
+                            lazy='joined', backref=db.backref('meta', lazy='subquery'))
     # metas = db.relationship('meta', secondary=companies_meta, back_populates='companies')
 
     def __repr__(self):
@@ -113,11 +113,11 @@ class Companies(PaginationAPIMixin, db.Model):
         }
         # Iterating over all the meta id's to fill the discipline/tags/branches lists
         for meta in self.metas:
-            if meta.type.value == 'Discipline':
+            if meta.type.value == 'disciplines':
                 data['disciplines'].append(meta.meta_string)
-            elif meta.type.value == 'Tag':
+            elif meta.type.value == 'tags':
                 data['tags'].append(meta.meta_string)
-            elif meta.type.value == 'Branch':
+            elif meta.type.value == 'branches':
                 data['branches'].append(meta.meta_string)
         return data
 
@@ -130,32 +130,32 @@ class Companies(PaginationAPIMixin, db.Model):
         # Check if city is already in Cities table, otherwise add it
         # TODO:
         if 'city_name' in data:
+            # Check if city is already in Cities table
             city = Cities.query.filter_by(city_name=data['city_name']).first()
+
+            # If city not in Cities table, add it
             if city == 0:
                 new_city = Cities(
                     city_name=data['city_name'], region=data['region'])
                 self.city.append(new_city)
-            # setattr probably wont work because of Cities table?
+            # If city in Cities table, change the city_id in the Companies table
             else:
                 setattr(self, 'city_id', city.city_id)
-                setattr(self, 'city_name', city.city_name)
-                setattr(self, 'region', city.region)
-            # setattr probably wont work because of Cities table?
 
         # Check if the disciplines, branches, tags already in Meta table, otherwise add it
         # TODO:
         for field in ['disciplines', 'branches', 'tags']:
             if field in data:
-                # another for loop to iterate over multiple meta_strings?
-                for item in data:
-                    pass
-                # Probably not going to work as the enums is case sensitive
-                meta = Meta.query.filter_by(
-                    meta_string=data[field], type=field).first()
-                if meta == 0:
-                    new_meta = Meta(meta_string=data[field], type=field)
-                    self.metas.append(new_meta)
-                self.metas.append(meta)
+                for item in data[field]:
+                    # Lookup if item is already in Meta table
+                    meta = Meta.query.filter_by(
+                        meta_string=item, type=field).first()
+                    if meta == 1:
+                        self.metas.append(meta)
+                    # If not in table add it:
+                    else:
+                        new_meta = Meta(meta_string=item, type=field)
+                        self.metas.append(new_meta)
 
 
 # Regions enum for cities.region
@@ -187,11 +187,10 @@ class Cities(db.Model):
 
 
 # Types enum for meta.type
-# TODO: change to respectively 'disciplines', 'branches', 'tags'
 class Types(enum.Enum):
-    ONE = 'Discipline'
-    TWO = 'Branch'
-    THREE = 'Tag'
+    ONE = 'disciplines'
+    TWO = 'branches'
+    THREE = 'tags'
 
 
 class Meta(db.Model):

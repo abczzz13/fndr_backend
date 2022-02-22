@@ -1,5 +1,4 @@
 from flask import json
-import pdb
 
 
 def test_get_companies(client, init_testdb, insert_data_db):
@@ -26,10 +25,10 @@ def test_get_companies_pagination(client, init_testdb, insert_data_db):
     '''
     response1 = client.get('/api/v1/companies')
     response2 = client.get('/api/v1/companies?page=2')
+
     data1 = json.loads(response1.get_data(as_text=True))
     data2 = json.loads(response2.get_data(as_text=True))
-    # TODO: Somehow the data gets unsorted somewhere... in a consistently way, ie company_id 20 is always the first record
-    pdb.set_trace()
+
     assert response2.status_code == 200
     assert len(data2['items']) == 5
     assert data1['items'][0]['company_id'] != data2['items'][0]['company_id']

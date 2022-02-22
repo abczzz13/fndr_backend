@@ -5,7 +5,7 @@ from app.models import Companies, Cities, Meta, companies_meta
 '''
 Run within Flask Shell
 Run the following commands in the Flask Shell:
-from import_data_v2 import import_data
+from app.import_data_v2 import import_data
 import_data('db.json')
 '''
 
@@ -82,11 +82,11 @@ def import_data(import_file):
                 db.session.commit()
 
             # Insert meta information with insert_meta() function
-            insert_meta(agency['disciplines'], 'Discipline',
+            insert_meta(agency['disciplines'], 'disciplines',
                         company_insert.company_id)
-            insert_meta(agency['branches'], 'Branch',
+            insert_meta(agency['branches'], 'branches',
                         company_insert.company_id)
-            insert_meta(agency['tags'], 'Tag', company_insert.company_id)
+            insert_meta(agency['tags'], 'tags', company_insert.company_id)
 
     # Closing the file
     file.close()
