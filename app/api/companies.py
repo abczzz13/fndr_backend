@@ -47,16 +47,14 @@ def get_companies():
     page = 1
     per_page = 15
     parameters = ['company', 'company_like', 'city', 'city_id', 'city_like', 'region',
-                  'size', 'year', 'page', 'per_page', 'filter_by']
+                  'size', 'year', 'tag', 'branch', 'discipline', 'page', 'per_page', 'filter_by']
     query = Companies.query.join(Cities)
 
-    # Implement validation?
-
-    # Change the query based on the presence of parameters
+    # Iterate through all the parameters and adjust the query based on the parameters
     for parameter in param_dict:
+        # Return error 400 if a unkown parameter has been found
         if parameter not in parameters:
-            # TODO: What to with errors?
-            pass
+            return error_response(400, "The parameter(s) you have used are unknown. Please use one or multiple of the following parameters: {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}".format(*parameters))
         if parameter == 'company':
             query = query.filter(Companies.company_name ==
                                  param_dict[parameter])
@@ -78,11 +76,15 @@ def get_companies():
         if parameter == 'year':
             query = query.filter(Companies.year ==
                                  param_dict[parameter])
+        if parameter == 'discipline':
+            query = query.join(companies_meta).join(Meta).filter(Meta.type == 'disciplines').filter(
+                Meta.meta_string.ilike(param_dict[parameter]))
+        if parameter == 'branch':
+            query = query.join(companies_meta).join(Meta).filter(Meta.type == 'branches').filter(
+                Meta.meta_string.ilike(param_dict[parameter]))
         if parameter == 'tag':
-            # TODO: implement filter by meta tags, branches, disciplines
-            #
-            # query.filter()
-            pass
+            query = query.join(companies_meta).join(Meta).filter(Meta.type == "tags").filter(
+                Meta.meta_string.ilike(param_dict[parameter]))
         if parameter == 'order_by':
             # query = query.order_by(....asc())
             # TODO: implement order by
@@ -106,7 +108,8 @@ def get_company(id):
     return jsonify(Companies.query.get_or_404(id).to_dict())
 
 
-@bp.route('/v1/companies/', methods=['POST'])
+# TODO: Create specific error message when using GET -> 405
+@bp.route('/v1/companies', methods=['POST'])
 @jwt_required()
 def add_company():
     data = request.get_json() or {}
@@ -119,7 +122,7 @@ def add_company():
         return bad_request("A company with that name already exists, please use another name")
     company = Companies()
     # TODO: Finalize the from_dict method
-    company.from_dict(data, new_company=True)
+    company.from_dict_new(data)
     db.session.add(company)
     db.session.commit()
 
@@ -133,9 +136,10 @@ def add_company():
     # cache.delete('all_tasks')
 
 
+# TODO: Create a specific error message when selecting a non-existing company_id
 @bp.route('/v1/companies/<int:id>', methods=['PUT'])
 @jwt_required()
-def update_company():
+def update_company(id):
     company = Companies.query.get_or_404(id)
     data = request.get_json() or {}
     # TODO: Validation

@@ -122,13 +122,47 @@ class Companies(PaginationAPIMixin, db.Model):
         return data
 
     def from_dict(self, data, new_company=False):
+        # TODO:
+        # Check if city is already in Cities table, otherwise add it
+        # If new company, add meta input
+        # If existing company, remove old meta input, check if meta input already exists in Meta db, otherwise add it
+        # Add company information
+        pass
+
+    def from_dict_new(self, data):
+        # TODO: method / endpoint still breaks if not all data field are supplied
+        # Check if city is already in Cities table
+        city = Cities.query.filter_by(city_name=data['city_name']).first()
+        if city == 0:
+            new_city = Cities(
+                city_name=data['city_name'], region=data['region'])
+            self.city.append(new_city)
+        else:
+            setattr(self, 'city_id', city.city_id)
+
+        # Check if the disciplines, branches, tags already in Meta table, otherwise add it
+        for field in ['disciplines', 'branches', 'tags']:
+            if field in data:
+                for item in data[field]:
+                    # Lookup if item is already in Meta table
+                    meta = Meta.query.filter_by(
+                        meta_string=item, type=field).first()
+                    if meta == 1:
+                        self.metas.append(meta)
+                    # If not in table add it:
+                    else:
+                        new_meta = Meta(meta_string=item, type=field)
+                        self.metas.append(new_meta)
+
         # Add Companies fields
         for field in ['company_name', 'logo_image_src', 'website', 'year', 'company_size']:
             if field in data:
                 setattr(self, field, data[field])
 
+        return self
+
+    def from_dict_adjust(self, data):
         # Check if city is already in Cities table, otherwise add it
-        # TODO:
         if 'city_name' in data:
             # Check if city is already in Cities table
             city = Cities.query.filter_by(city_name=data['city_name']).first()
@@ -147,6 +181,7 @@ class Companies(PaginationAPIMixin, db.Model):
         for field in ['disciplines', 'branches', 'tags']:
             if field in data:
                 for item in data[field]:
+                    # Also remove the previous records in the database self.metas.remove(...)?
                     # Lookup if item is already in Meta table
                     meta = Meta.query.filter_by(
                         meta_string=item, type=field).first()
@@ -156,6 +191,10 @@ class Companies(PaginationAPIMixin, db.Model):
                     else:
                         new_meta = Meta(meta_string=item, type=field)
                         self.metas.append(new_meta)
+        # Add Companies fields
+        for field in ['company_name', 'logo_image_src', 'website', 'year', 'company_size']:
+            if field in data:
+                setattr(self, field, data[field])
 
 
 # Regions enum for cities.region
