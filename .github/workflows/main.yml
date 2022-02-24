@@ -1,10 +1,6 @@
 name: fndr backend
 
-on:
-  push:
-    branches: [main] # Which branch(es)?
-  pull_request:
-    branches: [main] # Which branch(es)?
+on: [push]
         
 jobs:
   build:
