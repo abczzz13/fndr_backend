@@ -79,17 +79,18 @@ class Companies(PaginationAPIMixin, db.Model):
     __tablename__ = 'companies'
 
     company_id = db.Column(db.Integer, primary_key=True)
-    company_name = db.Column(db.String(64))
-    logo_image_src = db.Column(db.String(255))
-    city_id = db.Column(db.Integer, db.ForeignKey('cities.city_id'))
-    website = db.Column(db.String(255))
+    company_name = db.Column(db.String(64), unique=True, nullable=False)
+    logo_image_src = db.Column(db.String(255), default='')
+    city_id = db.Column(db.Integer, db.ForeignKey(
+        'cities.city_id'), nullable=False)
+    website = db.Column(db.String(255), nullable=False)
     year = db.Column(db.Integer)
     company_size = db.Column(db.Enum(Sizes, values_callable=lambda x: [
-                             str(member.value) for member in Sizes]))
-    city = db.relationship('Cities', backref='company', lazy='joined')
+                             str(member.value) for member in Sizes]), nullable=False)
+    city = db.relationship('Cities', backref='company',
+                           lazy='joined')
     metas = db.relationship('Meta', secondary=companies_meta,
                             lazy='joined', backref=db.backref('meta', lazy='subquery'))
-    # metas = db.relationship('meta', secondary=companies_meta, back_populates='companies')
 
     def __repr__(self):
         return '<Company ID: {}>'.format(self.company_id)
@@ -98,19 +99,31 @@ class Companies(PaginationAPIMixin, db.Model):
         self.city_name = self.city.city_name
 
     def to_dict(self):
+
         data = {
             'company_id': self.company_id,
             'company_name': self.company_name,
             'logo_image_src': self.logo_image_src,
-            'city_name': self.city.city_name,
+            # 'city_name': self.city.city_name,
             'website': self.website,
             'year': self.year,
             'company_size': self.company_size.value,
-            'region': self.city.region.value,
+            # 'region': self.city.region.value,
             'disciplines': [],
             'tags': [],
             'branches': []
         }
+
+        if self.city_name is not None:
+            data['city_name'] = self.city_name
+        else:
+            data['city_name'] = ''
+
+        if self.city.region.value is not None:
+            data['region'] = self.city.region.value
+        else:
+            data['region'] = 'Unknown'
+
         # Iterating over all the meta id's to fill the discipline/tags/branches lists
         for meta in self.metas:
             if meta.type.value == 'disciplines':
@@ -130,17 +143,36 @@ class Companies(PaginationAPIMixin, db.Model):
         pass
 
     def from_dict_new(self, data):
-        # TODO: method / endpoint still breaks if not all data field are supplied
-        # Check if city is already in Cities table
-        city = Cities.query.filter_by(city_name=data['city_name']).first()
-        if city == 0:
-            new_city = Cities(
-                city_name=data['city_name'], region=data['region'])
-            self.city.append(new_city)
-        else:
-            setattr(self, 'city_id', city.city_id)
 
-        # Check if the disciplines, branches, tags already in Meta table, otherwise add it
+        # Add Companies fields
+        for field in ['company_name', 'logo_image_src', 'website', 'year', 'company_size']:
+            if field in data:
+                setattr(self, field, data[field])
+            else:
+                if field == 'company_size':
+                    setattr(self, field, 'Unknown')
+                else:
+                    setattr(self, field, '')
+
+        # TODO: method / endpoint still breaks if not all data fields are supplied
+        # Check if city is already in Cities table
+        if 'city_name' in data:
+            city = Cities.query.filter_by(city_name=data['city_name']).first()
+            if city is None:
+                if 'region' in data:
+                    region = data['region']
+                else:
+                    region = 'Unknown'
+                new_city = Cities(city_name=data['city_name'], region=region)
+                new_city.company.append(self)
+            else:
+                setattr(self, 'city_id', city.city_id)
+        # else:
+            # setattr(self, 'city_id', '')
+            # self.city_name = ''
+            # self.city.region = 'Unknown'
+
+            # Check if the disciplines, branches, tags already in Meta table, otherwise add it
         for field in ['disciplines', 'branches', 'tags']:
             if field in data:
                 for item in data[field]:
@@ -153,11 +185,8 @@ class Companies(PaginationAPIMixin, db.Model):
                     else:
                         new_meta = Meta(meta_string=item, type=field)
                         self.metas.append(new_meta)
-
-        # Add Companies fields
-        for field in ['company_name', 'logo_image_src', 'website', 'year', 'company_size']:
-            if field in data:
-                setattr(self, field, data[field])
+            else:
+                setattr(self, field, '')
 
         return self
 
@@ -199,6 +228,7 @@ class Companies(PaginationAPIMixin, db.Model):
 
 # Regions enum for cities.region
 class Regions(enum.Enum):
+    RM = 'Remote'
     DR = 'Drenthe'
     FL = 'Flevoland'
     FR = 'Friesland'
@@ -217,7 +247,7 @@ class Cities(db.Model):
     __tablename__ = 'cities'
 
     city_id = db.Column(db.Integer, primary_key=True)
-    city_name = db.Column(db.String(64))
+    city_name = db.Column(db.String(64), unique=True, nullable=False)
     region = db.Column(db.Enum(Regions, values_callable=lambda x: [
                        str(member.value) for member in Regions]))
 

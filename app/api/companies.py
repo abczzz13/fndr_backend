@@ -108,18 +108,19 @@ def get_company(id):
     return jsonify(Companies.query.get_or_404(id).to_dict())
 
 
-# TODO: Create specific error message when using GET -> 405
 @bp.route('/v1/companies', methods=['POST'])
 @jwt_required()
 def add_company():
     data = request.get_json() or {}
+
+    # Validation
     if 'company_id' in data:
         return bad_request("Create company cannot include company_id. For modifying existing companies please use the PUT method")
     if 'company_name' not in data:
-        # TODO: Check for other required fields?
         return bad_request("Must include company_name field")
     if Companies.query.filter_by(company_name=data['company_name']).first():
         return bad_request("A company with that name already exists, please use another name")
+
     company = Companies()
     # TODO: Finalize the from_dict method
     company.from_dict_new(data)
@@ -133,7 +134,6 @@ def add_company():
 
     cache.clear()
     return response
-    # cache.delete('all_tasks')
 
 
 # TODO: Create a specific error message when selecting a non-existing company_id
@@ -159,6 +159,11 @@ def delete_company(id):
     db.session.delete(company)
     db.session.commit()
     cache.clear()
-    # TODO: Finalize delete route
-    return f'company_id: {id}'
-    # cache.delete('all_tasks')
+
+    message = {}
+    message['message'] = f"Company with company_id={id} has been deleted"
+
+    response = jsonify(message)
+    response.status_code = 200
+
+    return response

@@ -59,7 +59,7 @@ def import_data(import_file):
             if agency['city'] not in cities.values():
                 # If city is not in the cities dict, add the city and company to the DB
                 city_insert = Cities(
-                    city_name=agency['city'], region=agency['region'])
+                    city_name=agency['city'].capitalize(), region=agency['region'])
                 company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'],
                                            website=agency['website'], year=agency['yearEstablished'], company_size=agency['companySize'])
                 city_insert.company.append(company_insert)

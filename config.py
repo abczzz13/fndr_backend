@@ -7,6 +7,7 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
 ACCESS_EXPIRES = timedelta(hours=1)
+# TODO: Cleanup the config profiles
 
 
 # Configuration Settings
