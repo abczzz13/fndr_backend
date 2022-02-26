@@ -56,10 +56,10 @@ def import_data(import_file):
         for agency in data['agencies']:
 
             # Check if the city is already in the cities dict
-            if agency['city'] not in cities.values():
+            if agency['city'].strip().capitalize() not in cities.values():
                 # If city is not in the cities dict, add the city and company to the DB
                 city_insert = Cities(
-                    city_name=agency['city'].capitalize(), region=agency['region'])
+                    city_name=agency['city'].strip().capitalize(), region=agency['region'])
                 company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'],
                                            website=agency['website'], year=agency['yearEstablished'], company_size=agency['companySize'])
                 city_insert.company.append(company_insert)
@@ -73,7 +73,7 @@ def import_data(import_file):
             else:
                 # Get the city_id
                 city_id = [k for k, v in cities.items() if v ==
-                           agency['city']][0]
+                           agency['city'].strip().capitalize()][0]
 
                 # Insert the company into the DB
                 company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'], city_id=city_id,

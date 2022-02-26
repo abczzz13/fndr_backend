@@ -104,25 +104,25 @@ class Companies(PaginationAPIMixin, db.Model):
             'company_id': self.company_id,
             'company_name': self.company_name,
             'logo_image_src': self.logo_image_src,
-            # 'city_name': self.city.city_name,
+            'city_name': self.city.city_name,
             'website': self.website,
             'year': self.year,
             'company_size': self.company_size.value,
-            # 'region': self.city.region.value,
+            'region': self.city.region.value,
             'disciplines': [],
             'tags': [],
             'branches': []
         }
 
-        if self.city_name is not None:
-            data['city_name'] = self.city_name
-        else:
-            data['city_name'] = ''
+        # if self.city_name is not None:
+        #     data['city_name'] = self.city_name
+        # else:
+        #     data['city_name'] = ''
 
-        if self.city.region.value is not None:
-            data['region'] = self.city.region.value
-        else:
-            data['region'] = 'Unknown'
+        # if self.city.region.value is not None:
+        #     data['region'] = self.city.region.value
+        # else:
+        #     data['region'] = 'Unknown'
 
         # Iterating over all the meta id's to fill the discipline/tags/branches lists
         for meta in self.metas:

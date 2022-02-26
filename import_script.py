@@ -8,4 +8,4 @@ app = create_app(config_class=DevelopmentConfig)
 app.app_context().push()
 
 
-import_data('db.json')
+import_data('db_v2.json')
