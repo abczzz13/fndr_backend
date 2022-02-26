@@ -1,17 +1,19 @@
 import os
 import logging
-from flask import Flask, current_app
+from logging.handlers import RotatingFileHandler
+from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
+from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 from flask_caching import Cache
 from config import Config
-from logging.handlers import RotatingFileHandler
 
 
 # The Application Factory way:
 db = SQLAlchemy()
+ma = Marshmallow()
 migrate = Migrate()
 jwt = JWTManager()
 login = LoginManager()
@@ -29,6 +31,7 @@ def create_app(config_class=Config):
 
     # Initializing
     db.init_app(app)
+    ma.init_app(app)
     migrate.init_app(app, db)
     login.init_app(app)
     jwt.init_app(app)

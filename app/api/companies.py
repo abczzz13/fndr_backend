@@ -2,7 +2,7 @@ from flask import jsonify, request, url_for, abort
 from flask_login import login_required
 from flask_jwt_extended import create_access_token, jwt_required
 from app import db, cache
-from app.models import Companies, Cities, Meta, companies_meta, Users
+from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesSchema
 from app.api import bp
 from app.api.errors import bad_request, error_response
 # TODO: Looking into errors, validation and bad requests
@@ -167,3 +167,13 @@ def delete_company(id):
     response.status_code = 200
 
     return response
+
+
+# Test endpoints for marshmallow:
+@bp.route('/v1/marshmallow/<int:id>', methods=['GET'])
+def marshmallow_all(id):
+    companies = Companies.query.filter_by(company_id=id).first()
+
+    x = CompaniesSchema().dump(companies)
+
+    return jsonify(x)

@@ -1,4 +1,4 @@
-from app import db, login
+from app import db, login, ma
 from datetime import datetime
 from flask import url_for
 from flask_login import UserMixin
@@ -273,3 +273,40 @@ class Meta(db.Model):
 
     def __repr__(self):
         return '<Meta ID {}>'.format(self.meta_id)
+
+
+class MetaSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Meta
+        include_fk = True
+
+
+class CitiesSchema(ma.SQLAlchemyAutoSchema):
+    class Meta:
+        model = Cities
+        include_fk = True
+
+
+class CompaniesSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = Companies
+        include_fk = True
+        # ordered = True
+
+    company_id = ma.auto_field()
+    company_name = ma.auto_field()
+    logo_image_src = ma.auto_field()
+    city = ma.Pluck(CitiesSchema, 'city_name')
+    website = ma.auto_field()
+    year = ma.auto_field()
+    company_size = ma.auto_field()
+    meta = ma.Nested(MetaSchema, attribute='metas',
+                     many=True)
+
+
+'''
+meta_schema = MetaSchema()
+companies_schema = CompaniesSchema()
+x = Companies.query.filter_by(company_id=1).first()
+companies_schema.dump(x)
+'''
