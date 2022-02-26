@@ -3,87 +3,142 @@ import re
 from datetime import timedelta
 from dotenv import load_dotenv
 
+
+# Load local .env file
 basedir = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(basedir, '.env'))
 
+
+def get_env_variable(name):
+    try:
+        return os.environ.get(name)
+    except KeyError:
+        message = f"Expected environment variable {name} not set."
+        raise Exception(message)
+
+
+def create_db_url(user, pw, url, db):
+    return f"postgresql://{user}:{pw}@{url}/{db}"
+
+
+def get_env_db_url(env_setting):
+    if env_setting == 'development':
+        POSTGRES_URL = get_env_variable('POSTGRES_URL')
+        POSTGRES_USER = get_env_variable('POSTGRES_USER')
+        POSTGRES_PW = get_env_variable('POSTGRES_PW')
+        POSTGRES_DB = get_env_variable('POSTGRES_DB')
+    elif env_setting == 'staging':
+        POSTGRES_URL = get_env_variable('POSTGRES_URL')
+        POSTGRES_USER = get_env_variable('POSTGRES_USER')
+        POSTGRES_PW = get_env_variable('POSTGRES_PW')
+        POSTGRES_DB = get_env_variable('POSTGRES_DB')
+    elif env_setting == 'production':
+        POSTGRES_URL = get_env_variable('POSTGRES_URL')
+        POSTGRES_USER = get_env_variable('POSTGRES_USER')
+        POSTGRES_PW = get_env_variable('POSTGRES_PW')
+        POSTGRES_DB = get_env_variable('POSTGRES_DB')
+    elif env_setting == 'local':
+        POSTGRES_URL = get_env_variable('POSTGRES_URL')
+        POSTGRES_USER = get_env_variable('POSTGRES_USER')
+        POSTGRES_PW = get_env_variable('POSTGRES_PW')
+        POSTGRES_DB = get_env_variable('POSTGRES_DB')
+    elif env_setting == 'testing':
+        POSTGRES_URL = get_env_variable('TEST_POSTGRES_URL')
+        POSTGRES_USER = get_env_variable('TEST_POSTGRES_USER')
+        POSTGRES_PW = get_env_variable('TEST_POSTGRES_PW')
+        POSTGRES_DB = get_env_variable('TEST_POSTGRES_DB')
+
+    return create_db_url(POSTGRES_USER, POSTGRES_PW, POSTGRES_URL, POSTGRES_DB)
+
+
+# DB URLS for each environment
+LOCAL_DB_URL = get_env_db_url('local')
+DEV_DB_URL = get_env_db_url('development')
+TESTING_DB_URL = get_env_variable(
+    'TEST_POSTGRES_URL')  # changed for Github Actions
+STAGING_DB_URL = get_env_db_url('staging')
+PROD_DB_URL = get_env_db_url('production')
+
+
+# Redis caching expiry time
 ACCESS_EXPIRES = timedelta(hours=1)
-# TODO: Cleanup the config profiles
 
 
-# Configuration Settings
 class Config():
     DEBUG = False
     DEVELOPMENT = False
+    TESTING = False
+
     CSRF_ENABLED = True
     SECRET_KEY = os.environ.get('SECRET_KEY')
     JWT_SECRET_KEY = os.environ.get('JWT_SECRET_KEY')
     JWT_ACCESS_TOKEN_EXPIRES = ACCESS_EXPIRES
+
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    TESTING = False
+
     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
 
 
-# Configuration Settings for Production
-class ProductionConfig(Config):
-
-    # Adjust DB URI for sqlalchemy to work with Heroku
-    if os.environ.get('DATABASE_URL') is not None:
-        uri = os.environ.get('DATABASE_URL')
-        if uri.startswith('postgres://'):
-            uri = uri.replace('postgres://', 'postgresql://', 1)
-
-        SQLALCHEMY_DATABASE_URI = uri
-
-    # Heroku Redis DB
-    # CACHE_REDIS_URL = os.environ['REDIS_TLS_URL'] or os.environ['REDIS_URL']
-
-
-# Configuration Settings for Development
 class DevelopmentConfig(Config):
+    DEBUG = True
+    DEVELOPMENT = True
 
-    # Creating the Postgres Database URI
-    POSTGRES_URL = os.environ.get('POSTGRES_URL')
-    POSTGRES_USER = os.environ.get('POSTGRES_USER')
-    POSTGRES_PW = os.environ.get('POSTGRES_PW')
-    POSTGRES_DB = os.environ.get('POSTGRES_DB')
-    DB_URL = 'postgresql+psycopg2://{user}:{pw}@{url}/{db}'.format(
-        user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
+    # SQLAlchemy settings
+    SQLALCHEMY_DATABASE_URI = DEV_DB_URL
+    SQLALCHEMY_ECHO = True
 
     # Cache Redis DB settings
     CACHE_TYPE = os.environ['CACHE_TYPE']
-    # CACHE_REDIS_HOST = os.environ['CACHE_REDIS_HOST']
-    # CACHE_REDIS_PORT = os.environ['CACHE_REDIS_PORT']
-    # CACHE_REDIS_DB = os.environ['CACHE_REDIS_DB']
     CACHE_REDIS_URL = os.environ['REDIS_URL']
     CACHE_DEFAULT_TIMEOUT = os.environ['CACHE_DEFAULT_TIMEOUT']
 
-    DEBUG = True
-    DEVELOPMENT = True
-    SQLALCHEMY_DATABASE_URI = DB_URL
-    SQLALCHEMY_ECHO = True
+
+class LocalConfig(DevelopmentConfig):
+
+    # SQLAlchemy settings
+    SQLALCHEMY_DATABASE_URI = LOCAL_DB_URL
+
+
+class StagingConfig(Config):
+    DEBUG = False
+    DEVELOPMENT = False
+    TESTING = False
+
+    # SQLAlchemy settings
+    SQLALCHEMY_DATABASE_URI = STAGING_DB_URL
+    SQLALCHEMY_ECHO = False
+
+    # Cache Redis DB settings
+    CACHE_TYPE = os.environ['CACHE_TYPE']
+    CACHE_REDIS_URL = os.environ['REDIS_URL']
+    CACHE_DEFAULT_TIMEOUT = os.environ['CACHE_DEFAULT_TIMEOUT']
+
+
+class ProductionConfig(Config):
+    DEBUG = False
+    DEVELOPMENT = False
+    TESTING = False
+
+    # SQLAlchemy settings
+    SQLALCHEMY_DATABASE_URI = PROD_DB_URL
+    SQLALCHEMY_ECHO = False
+
+    # Cache Redis DB settings
+    CACHE_TYPE = os.environ['CACHE_TYPE']
+    CACHE_REDIS_URL = os.environ['REDIS_URL']
+    CACHE_DEFAULT_TIMEOUT = os.environ['CACHE_DEFAULT_TIMEOUT']
 
 
 class TestConfig(Config):
+    DEBUG = True
+    DEVELOPMENT = True
+    TESTING = True
 
-    # Creating the Postgres Database URI
-    POSTGRES_URL = os.environ.get('POSTGRES_URL')
-    POSTGRES_USER = os.environ.get('POSTGRES_USER')
-    POSTGRES_PW = os.environ.get('POSTGRES_PW')
-    POSTGRES_DB = 'fndr_backend_test'
-    DB_URL = 'postgresql+psycopg2://{user}:{pw}@{url}/{db}'.format(
-        user=POSTGRES_USER, pw=POSTGRES_PW, url=POSTGRES_URL, db=POSTGRES_DB)
+    # SQLAlchemy settings
+    SQLALCHEMY_DATABASE_URI = TESTING_DB_URL
+    SQLALCHEMY_ECHO = True
 
     # Cache Redis DB settings
     CACHE_TYPE = os.environ['CACHE_TYPE']
-    # CACHE_REDIS_HOST = os.environ['CACHE_REDIS_HOST']
-    # CACHE_REDIS_PORT = os.environ['CACHE_REDIS_PORT']
-    # CACHE_REDIS_DB = os.environ['CACHE_REDIS_DB']
     CACHE_REDIS_URL = os.environ['REDIS_URL']
     CACHE_DEFAULT_TIMEOUT = os.environ['CACHE_DEFAULT_TIMEOUT']
-
-    DEBUG = True
-    DEVELOPMENT = True
-    SQLALCHEMY_DATABASE_URI = DB_URL
-    SQLALCHEMY_ECHO = True
-
-    TESTING = True
