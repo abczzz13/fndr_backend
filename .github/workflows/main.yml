@@ -51,5 +51,6 @@ jobs:
           FLASK_APP: ${{ secrets.FLASK_APP }}
           FLASK_ENV: ${{ secrets.FLASK_ENV }}
           APP_SETTINGS: ${{ secrets.APP_SETTINGS }}
+          CACHE_REDIS_URL: ${{ secrets.REDIS_URL }}
           
 
