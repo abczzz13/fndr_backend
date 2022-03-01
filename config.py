@@ -54,8 +54,7 @@ def get_env_db_url(env_setting):
 # DB URLS for each environment
 LOCAL_DB_URL = get_env_db_url('local')
 DEV_DB_URL = get_env_db_url('development')
-TESTING_DB_URL = get_env_variable(
-    'TEST_POSTGRES_URL')  # changed for Github Actions
+TESTING_DB_URL = get_env_db_url('testing')
 STAGING_DB_URL = get_env_db_url('staging')
 PROD_DB_URL = get_env_db_url('production')
 
