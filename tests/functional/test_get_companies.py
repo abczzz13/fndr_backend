@@ -1,5 +1,4 @@
 from flask import json
-import pdb
 
 
 def test_get_companies(client, init_testdb, insert_data_db):
@@ -8,7 +7,6 @@ def test_get_companies(client, init_testdb, insert_data_db):
     WHEN the '/api/companies' page is requested (GET)
     THEN the response will contain the first 15 records and their associated data
     '''
-    pdb.set_trace()
     response = client.get('/api/v1/companies')
 
     data = json.loads(response.get_data(as_text=True))
