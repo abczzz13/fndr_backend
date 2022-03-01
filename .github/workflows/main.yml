@@ -52,5 +52,6 @@ jobs:
           FLASK_ENV: ${{ secrets.FLASK_ENV }}
           APP_SETTINGS: ${{ secrets.APP_SETTINGS }}
           REDIS_URL: ${{ secrets.REDIS_URL }}
+          CACHE_DEFAULT_TIMEOUT: {{ secrets.CACHE_DEFAULT_TIMEOUT }}
           
 
