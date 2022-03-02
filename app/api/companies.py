@@ -31,14 +31,43 @@ def revoke_token():
     pass
 
 
-@bp.route('/v1/companies/all', methods=['GET'])
+@bp.route('/v1/cities')
+def get_cities():
+
+    # Get the parameters from request
+    param_dict = request.args.to_dict()
+
+    # Check if city_like parameter is in GET request
+    if 'city_like' in param_dict:
+
+        city_like = '%' + param_dict['city_like'] + '%'
+
+        # Raw SQL query, make sure it is not susceptible to SQL Injection attacks
+        query = db.session.execute(
+            "SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id WHERE lower(cities.city_name) LIKE lower(:city_like) GROUP BY companies.city_id, cities.city_name ORDER BY city_count DESC", {"city_like": city_like})
+    else:
+        query = db.session.execute(
+            'SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id GROUP BY companies.city_id, cities.city_name ORDER BY city_count ASC;')
+
+    city_dict = dict((x, y) for x, y in query.fetchall())
+    # Returns a list with a list for every city
+    # sorted_dict = sorted(city_dict.items(), key=lambda x: x[1], reverse=True)
+
+    # Returns a unsorted dictionary with a key/value pair for every city+count
+    sorted_dict = {k: v for k, v in sorted(
+        city_dict.items(), key=lambda item: item[1], reverse=True)}
+
+    return jsonify(sorted_dict)
+
+
+@ bp.route('/v1/companies/all', methods=['GET'])
 def get_companies_all():
     all_companies = Companies.query.order_by(Companies.company_id.asc()).all()
     return jsonify([company.to_dict() for company in all_companies])
 
 
-@bp.route('/v1/companies', methods=['GET'])
-@cache.cached(timeout=30, query_string=True)
+@ bp.route('/v1/companies', methods=['GET'])
+@ cache.cached(timeout=30, query_string=True)
 def get_companies():
     # Get the parameters from request
     param_dict = request.args.to_dict()
