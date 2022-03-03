@@ -3,7 +3,6 @@ from datetime import datetime
 from flask import url_for
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-import enum
 
 
 # Pagination mixin Class
@@ -99,7 +98,7 @@ class Companies(PaginationAPIMixin, db.Model):
             'website': self.website,
             'year': self.year,
             'company_size': self.company_size,
-            'region': self.city.region.value,
+            'region': self.city.region,
             'disciplines': [],
             'tags': [],
             'branches': []
@@ -117,11 +116,11 @@ class Companies(PaginationAPIMixin, db.Model):
 
         # Iterating over all the meta id's to fill the discipline/tags/branches lists
         for meta in self.metas:
-            if meta.type.value == 'disciplines':
+            if meta.type == 'disciplines':
                 data['disciplines'].append(meta.meta_string)
-            elif meta.type.value == 'tags':
+            elif meta.type == 'tags':
                 data['tags'].append(meta.meta_string)
-            elif meta.type.value == 'branches':
+            elif meta.type == 'branches':
                 data['branches'].append(meta.meta_string)
         return data
 

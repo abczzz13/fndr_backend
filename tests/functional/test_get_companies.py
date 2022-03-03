@@ -51,9 +51,9 @@ def test_get_companies_city_like(client, init_testdb, insert_data_db):
 
 def test_get_companies_size(client, init_testdb, insert_data_db):
     '''
-    GIVEN that there are 5 companies in the DB with size of '11-50'
+    GIVEN that there are 19 companies in the DB with size of '11-50'
     WHEN the '/api/companies' is requested with a size=11-50 parameter
-    THEN the response will contain 5 records and their associated data
+    THEN the response will contain 19 records and their associated data
     '''
     response = client.get('/api/v1/companies?size=11-50&per_page=20')
     data = json.loads(response.get_data(as_text=True))
