@@ -1,8 +1,8 @@
-"""Hard reset due to changes in enums
+"""Removed the enums to fix the db migration proces
 
-Revision ID: b5f809c787a9
+Revision ID: 44175b6b8452
 Revises: 
-Create Date: 2022-02-25 21:20:05.351319
+Create Date: 2022-03-03 11:50:28.062135
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = 'b5f809c787a9'
+revision = '44175b6b8452'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -21,13 +21,13 @@ def upgrade():
     op.create_table('cities',
     sa.Column('city_id', sa.Integer(), nullable=False),
     sa.Column('city_name', sa.String(length=64), nullable=False),
-    sa.Column('region', sa.Enum('Remote', 'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg', 'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zuid-Holland', 'Zeeland', name='regions'), nullable=True),
+    sa.Column('region', sa.String(length=64), nullable=True),
     sa.PrimaryKeyConstraint('city_id'),
     sa.UniqueConstraint('city_name')
     )
     op.create_table('meta',
     sa.Column('meta_id', sa.Integer(), nullable=False),
-    sa.Column('type', sa.Enum('disciplines', 'branches', 'tags', name='types'), nullable=True),
+    sa.Column('type', sa.String(length=64), nullable=True),
     sa.Column('meta_string', sa.String(length=120), nullable=True),
     sa.PrimaryKeyConstraint('meta_id')
     )
@@ -48,7 +48,7 @@ def upgrade():
     sa.Column('city_id', sa.Integer(), nullable=False),
     sa.Column('website', sa.String(length=255), nullable=False),
     sa.Column('year', sa.Integer(), nullable=True),
-    sa.Column('company_size', sa.Enum('1-10', '11-50', '51-100', 'GT-100', name='sizes'), nullable=False),
+    sa.Column('company_size', sa.String(length=64), nullable=False),
     sa.ForeignKeyConstraint(['city_id'], ['cities.city_id'], ),
     sa.PrimaryKeyConstraint('company_id'),
     sa.UniqueConstraint('company_name')
