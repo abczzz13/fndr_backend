@@ -1,8 +1,8 @@
 def test_cors(client):
     '''
-    GIVEN that there are more than 15 companies in the DB
-    WHEN the '/api/companies' page is requested (GET)
-    THEN the response will contain the first 15 records and their associated data
+    GIVEN that the the flask application accepts CORS headers
+    WHEN the '/' page is requested (GET) with a Origin header
+    THEN the application will return a valid response and a Access-Control-Allow-Origin header
     '''
     response = client.get('/', headers={'Origin': 'http://www.example.com'})
 
