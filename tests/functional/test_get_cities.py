@@ -27,3 +27,5 @@ def test_get_cities_city_like(client, init_testdb, insert_data_db):
 
     assert response.status_code == 200
     assert len(data) == 2
+    assert isinstance(data['Amsterdam'], int)
+    assert isinstance(data['Rotterdam'], int)
