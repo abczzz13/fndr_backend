@@ -1,11 +1,11 @@
 from flask import json
 
 
-def test_get_cities(client, init_testdb, insert_data_db):
+def test_get_cities(client, insert_data_db):
     '''
-    GIVEN that there are more than 15 companies in the DB
+    GIVEN that there are mutiple cities in the DB
     WHEN the '/api/v1/cities' page is requested (GET)
-    THEN the response will contain a dict of all the city records (key) and the count (value) of companies in those cities
+    THEN the response will contain a list of all the cities and the count of companies in those cities
     '''
     response = client.get('/api/v1/cities')
 
@@ -13,7 +13,8 @@ def test_get_cities(client, init_testdb, insert_data_db):
 
     assert response.status_code == 200
     assert len(data) == 11
-    assert isinstance(data['Amsterdam'], int)
+    assert data[0][0] == 'Rotterdam'
+    # assert isinstance(data['Amsterdam'], int)
 
 
 def test_get_cities_city_like(client, init_testdb, insert_data_db):
@@ -27,5 +28,5 @@ def test_get_cities_city_like(client, init_testdb, insert_data_db):
 
     assert response.status_code == 200
     assert len(data) == 2
-    assert isinstance(data['Amsterdam'], int)
-    assert isinstance(data['Rotterdam'], int)
+    assert data[0][0] == 'Rotterdam'
+    assert data[1][0] == 'Amsterdam'
