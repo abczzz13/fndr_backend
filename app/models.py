@@ -217,30 +217,12 @@ class Companies(PaginationAPIMixin, db.Model):
                 setattr(self, field, data[field])
 
 
-# Regions enum for cities.region
-class Regions(enum.Enum):
-    RM = 'Remote'
-    DR = 'Drenthe'
-    FL = 'Flevoland'
-    FR = 'Friesland'
-    GD = 'Gelderland'
-    GR = 'Groningen'
-    LB = 'Limburg'
-    NB = 'Noord-Brabant'
-    NH = 'Noord-Holland'
-    OV = 'Overijssel'
-    UT = 'Utrecht'
-    ZH = 'Zuid-Holland'
-    ZL = 'Zeeland'
-
-
 class Cities(db.Model):
     __tablename__ = 'cities'
 
     city_id = db.Column(db.Integer, primary_key=True)
     city_name = db.Column(db.String(64), unique=True, nullable=False)
-    region = db.Column(db.Enum(Regions, values_callable=lambda x: [
-                       str(member.value) for member in Regions]))
+    region = db.Column(db.String(64))
 
     def __repr__(self):
         return '<City ID: {}>'.format(self.city_id)
