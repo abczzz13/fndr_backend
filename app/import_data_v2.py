@@ -76,9 +76,15 @@ def import_data(import_file):
                 city_id = [k for k, v in cities.items() if v ==
                            agency['city'].capitalize()][0]
 
+                # Validate company_size
+                if agency['companySize'] in ['1-10', '11-50', '51-100', 'GT-100']:
+                    company_size = agency['companySize']
+                else:
+                    company_size = '1-10'  # as default value, or do we want something like 'Unknown'?
+
                 # Insert the company into the DB
                 company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'], city_id=city_id,
-                                           website=agency['website'], year=agency['yearEstablished'], company_size=agency['companySize'])
+                                           website=agency['website'], year=agency['yearEstablished'], company_size=company_size)
                 db.session.add(company_insert)
                 db.session.commit()
 

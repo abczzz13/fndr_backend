@@ -57,14 +57,6 @@ def load_user(id):
     return Users.query.get(int(id))
 
 
-# Sizes enum for companies.company_size
-class Sizes(enum.Enum):
-    SMALL = '1-10'
-    MEDIUM = '11-50'
-    LARGE = '51-100'
-    XLARGE = 'GT-100'
-
-
 # Many to Many table for Companies and Meta
 companies_meta = db.Table('companies_meta',
                           db.Column('company_id', db.Integer, db.ForeignKey(
@@ -85,8 +77,7 @@ class Companies(PaginationAPIMixin, db.Model):
         'cities.city_id'), nullable=False)
     website = db.Column(db.String(255), nullable=False)
     year = db.Column(db.Integer)
-    company_size = db.Column(db.Enum(Sizes, values_callable=lambda x: [
-                             str(member.value) for member in Sizes]), nullable=False)
+    company_size = db.Column(db.String(64), nullable=False)
     city = db.relationship('Cities', backref='company',
                            lazy='joined')
     metas = db.relationship('Meta', secondary=companies_meta,
@@ -107,7 +98,7 @@ class Companies(PaginationAPIMixin, db.Model):
             'city_name': self.city.city_name,
             'website': self.website,
             'year': self.year,
-            'company_size': self.company_size.value,
+            'company_size': self.company_size,
             'region': self.city.region.value,
             'disciplines': [],
             'tags': [],
@@ -286,6 +277,10 @@ class CitiesSchema(ma.SQLAlchemyAutoSchema):
         model = Cities
         include_fk = True
 
+    # city_id = ma.auto_field()
+    # city_name = ma.auto_field()
+    # region = ma.Str(validate=validate.OneOf(["read", "write", "admin"]))
+
 
 class CompaniesSchema(ma.SQLAlchemySchema):
     class Meta:
@@ -297,6 +292,7 @@ class CompaniesSchema(ma.SQLAlchemySchema):
     company_name = ma.auto_field()
     logo_image_src = ma.auto_field()
     city = ma.Pluck(CitiesSchema, 'city_name')
+    region = ma.Pluck(CitiesSchema, 'region')
     website = ma.auto_field()
     year = ma.auto_field()
     company_size = ma.auto_field()
@@ -309,4 +305,8 @@ meta_schema = MetaSchema()
 companies_schema = CompaniesSchema()
 x = Companies.query.filter_by(company_id=1).first()
 companies_schema.dump(x)
+
+{"branches": [],"city_name": "Rotterdam","company_id": 1,"company_name": "Digital Growth Agency","company_size": "11-50","disciplines": ["Conceptontwikkeling","Conversie-optimalisatie","Strategie","Web development","Webdesign"],"logo_image_src": "https://eguide.nl/media/output/100_100/DIG_logo_trans.png","region": "Zuid-Holland","tags": [],"website": "http://www.digitalgrowthagency.nl/","year": 2019}
+
+{"city": "Rotterdam", "region": "Zuid-Holland","company_id": 1,"company_name": "Digital Growth Agency","company_size": "11-50","logo_image_src": "https://eguide.nl/media/output/100_100/DIG_logo_trans.png","website": "http://www.digitalgrowthagency.nl/","year": 2019}
 '''
