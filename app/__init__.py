@@ -8,6 +8,7 @@ from flask_migrate import Migrate
 from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 from flask_caching import Cache
+from flask_cors import CORS
 from config import Config
 
 
@@ -20,6 +21,7 @@ login = LoginManager()
 cache = Cache()
 login.login_view = 'auth.login'
 login.login_message = ("Please log in to access this page.")
+cors = CORS()
 
 
 # Create the App
@@ -36,6 +38,7 @@ def create_app(config_class=Config):
     login.init_app(app)
     jwt.init_app(app)
     cache.init_app(app)
+    cors.init_app(app)
 
     # Registering the Blueprints
     from app.api import bp as api_bp
