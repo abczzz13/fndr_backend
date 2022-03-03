@@ -1,10 +1,11 @@
-from flask import jsonify, request, url_for, abort
-from flask_login import login_required
-from flask_jwt_extended import create_access_token, jwt_required
 from app import db, cache
 from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesSchema
 from app.api import bp
 from app.api.errors import bad_request, error_response
+from flask import jsonify, request, url_for
+from flask_jwt_extended import create_access_token, jwt_required
+
+
 # TODO: Looking into errors, validation and bad requests
 
 
@@ -36,28 +37,25 @@ def get_cities():
 
     # Get the parameters from request
     param_dict = request.args.to_dict()
+    # city_like = request.args.get('city_like')
 
     # Check if city_like parameter is in GET request
     if 'city_like' in param_dict:
-
         city_like = '%' + param_dict['city_like'] + '%'
 
-        # Raw SQL query, make sure it is not susceptible to SQL Injection attacks
+        # Raw SQL query to get a selection of cities which fit the city_like parameter
         query = db.session.execute(
-            "SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id WHERE lower(cities.city_name) LIKE lower(:city_like) GROUP BY companies.city_id, cities.city_name ORDER BY city_count DESC", {"city_like": city_like})
+            "SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id WHERE lower(cities.city_name) LIKE lower(:city_like) GROUP BY companies.city_id, cities.city_name", {"city_like": city_like})
     else:
+        # Raw SQL query to get all cities with company count
         query = db.session.execute(
-            'SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id GROUP BY companies.city_id, cities.city_name ORDER BY city_count ASC;')
+            "SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id GROUP BY companies.city_id, cities.city_name")
 
-    city_dict = dict((x, y) for x, y in query.fetchall())
     # Returns a list with a list for every city
-    # sorted_dict = sorted(city_dict.items(), key=lambda x: x[1], reverse=True)
+    city_dict = dict((x, y) for x, y in query.fetchall())
+    sorted_list = sorted(city_dict.items(), key=lambda x: x[1], reverse=True)
 
-    # Returns a unsorted dictionary with a key/value pair for every city+count
-    sorted_dict = {k: v for k, v in sorted(
-        city_dict.items(), key=lambda item: item[1], reverse=True)}
-
-    return jsonify(sorted_dict)
+    return jsonify(sorted_list)
 
 
 @ bp.route('/v1/companies/all', methods=['GET'])
