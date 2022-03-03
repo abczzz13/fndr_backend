@@ -228,21 +228,12 @@ class Cities(db.Model):
         return '<City ID: {}>'.format(self.city_id)
 
 
-# Types enum for meta.type
-class Types(enum.Enum):
-    ONE = 'disciplines'
-    TWO = 'branches'
-    THREE = 'tags'
-
-
 class Meta(db.Model):
     __tablename__ = 'meta'
 
     meta_id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.Enum(Types, values_callable=lambda x: [
-        str(member.value) for member in Types]))
+    type = db.Column(db.String(64))
     meta_string = db.Column(db.String(120))
-    # companies = db.relationship('Companies', secondary = companies_meta, back_populates = 'metas')
 
     def __repr__(self):
         return '<Meta ID {}>'.format(self.meta_id)
