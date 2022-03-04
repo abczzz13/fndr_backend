@@ -37,7 +37,6 @@ def get_cities():
 
     # Get the parameters from request
     param_dict = request.args.to_dict()
-    # city_like = request.args.get('city_like')
 
     # Check if city_like parameter is in GET request
     if 'city_like' in param_dict:
@@ -45,15 +44,14 @@ def get_cities():
 
         # Raw SQL query to get a selection of cities which fit the city_like parameter
         query = db.session.execute(
-            "SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id WHERE lower(cities.city_name) LIKE lower(:city_like) GROUP BY companies.city_id, cities.city_name", {"city_like": city_like})
+            "SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id WHERE lower(cities.city_name) LIKE lower(:city_like) GROUP BY companies.city_id, cities.city_name ORDER BY city_count DESC", {"city_like": city_like})
     else:
         # Raw SQL query to get all cities with company count
         query = db.session.execute(
-            "SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id GROUP BY companies.city_id, cities.city_name")
+            "SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id GROUP BY companies.city_id, cities.city_name ORDER BY city_count DESC")
 
-    # Returns a list with a list for every city
-    city_dict = dict((x, y) for x, y in query.fetchall())
-    sorted_list = sorted(city_dict.items(), key=lambda x: x[1], reverse=True)
+    # Put the query results in a sorted list
+    sorted_list = list((x, y) for x, y in query.fetchall())
 
     return jsonify(sorted_list)
 
