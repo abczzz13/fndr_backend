@@ -1,9 +1,10 @@
-from app.models import Users
-import pytest
 from app import create_app, db
 from app.import_data_v2 import import_data
-from flask_login import login_user
+from app.models import Users
 from config import TestConfig
+from flask import json
+from flask_login import login_user
+import pytest
 
 
 @pytest.fixture(scope='module')
@@ -21,7 +22,7 @@ def client():
 
 
 @pytest.fixture(scope='module')
-def init_testdb(client):
+def init_testdb():
     # Create the database
     db.create_all()
 
@@ -34,12 +35,12 @@ def init_testdb(client):
 
 
 @pytest.fixture(scope='module')
-def insert_data_db(client, init_testdb):
+def insert_data_db(init_testdb):
     import_data('test_db.json')
 
 
 @pytest.fixture(scope='module')
-def new_user(client, init_testdb):
+def new_user(init_testdb):
     new_user = Users(username='Test User', email='test@fnder-backend.com')
     new_user.set_password('testtest')
 
@@ -47,6 +48,25 @@ def new_user(client, init_testdb):
     db.session.commit()
 
     return new_user
+
+
+# TODO: How to use the token in other tests?
+@pytest.fixture(scope='module')
+def get_token(client, init_testdb, new_user):
+
+    data = {
+        "username": "Test User",
+        "password": "testtest"
+    }
+
+    response = client.post("/api/v1/token", data=json.dumps(data),
+                           headers={"Content-Type": "application/json"},)
+
+    result = json.loads(response.get_data(as_text=True))
+
+    token = result['token']
+
+    return token
 
 
 @pytest.fixture(scope='module')

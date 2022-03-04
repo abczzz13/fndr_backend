@@ -135,7 +135,7 @@ class TestConfig(Config):
 
     # SQLAlchemy settings
     SQLALCHEMY_DATABASE_URI = TESTING_DB_URL
-    SQLALCHEMY_ECHO = True
+    SQLALCHEMY_ECHO = False
 
     # Cache Redis DB settings
     CACHE_TYPE = os.environ['CACHE_TYPE']

@@ -73,12 +73,12 @@ def import_data(import_file):
                 company_size = '1-10'
 
             # Check if the city is already in the cities dict
-            if agency['city'].capitalize() not in cities.values():
+            if agency['city'].title() not in cities.values():
 
                 # If city is not in the cities dict, add the city and company to the DB
                 city_insert = Cities(
-                    city_name=agency['city'].capitalize(), region=region)
-                company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'],
+                    city_name=agency['city'].title(), region=region)
+                company_insert = Companies(company_name=agency['name'].title(), logo_image_src=agency['eguideImageSrc'],
                                            website=agency['website'], year=agency['yearEstablished'], company_size=company_size)
                 city_insert.company.append(company_insert)
                 db.session.add(city_insert)
@@ -91,10 +91,10 @@ def import_data(import_file):
             else:
                 # Get the city_id
                 city_id = [k for k, v in cities.items() if v ==
-                           agency['city'].capitalize()][0]
+                           agency['city'].title()][0]
 
                 # Insert the company into the DB
-                company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'], city_id=city_id,
+                company_insert = Companies(company_name=agency['name'].title(), logo_image_src=agency['eguideImageSrc'], city_id=city_id,
                                            website=agency['website'], year=agency['yearEstablished'], company_size=company_size)
                 db.session.add(company_insert)
                 db.session.commit()
