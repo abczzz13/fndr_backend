@@ -47,8 +47,7 @@ def import_data(import_file):
     # Opening JSON file
     with open(import_file) as file:
 
-        # returns JSON object as
-        # a dictionary
+        # returns JSON object as a dictionary
         data = json.load(file)
         cities = {}
 
@@ -56,18 +55,20 @@ def import_data(import_file):
         for agency in data['agencies']:
 
          # Validate region
-            if agency['region'].title() in ['Remote', 'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg', 'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zuid-Holland', 'Zeeland']:
+            regions = ['Remote', 'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg',
+                       'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zuid-Holland', 'Zeeland']
+            if agency['region'].title() in regions:
                 region = agency['region'].title()
             else:
                 region = 'Remote'
 
             # Validate company_size
-            if agency['companySize'] in ['1-10', '11-50', '51-100', 'GT-100']:
+            sizes = ['1-10', '11-50', '51-100', 'GT-100']
+            if agency['companySize'] in sizes:
                 company_size = agency['companySize']
             else:
-                company_size = '1-10'  # as default value, or do we want something like 'Unknown'?
+                company_size = '1-10'
 
-            # .strip() ? -> breaks it
             # Check if the city is already in the cities dict
             if agency['city'].capitalize() not in cities.values():
 
