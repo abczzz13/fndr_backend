@@ -3,7 +3,6 @@ from datetime import datetime
 from flask import url_for
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-import enum
 
 
 # Pagination mixin Class
@@ -57,14 +56,6 @@ def load_user(id):
     return Users.query.get(int(id))
 
 
-# Sizes enum for companies.company_size
-class Sizes(enum.Enum):
-    SMALL = '1-10'
-    MEDIUM = '11-50'
-    LARGE = '51-100'
-    XLARGE = 'GT-100'
-
-
 # Many to Many table for Companies and Meta
 companies_meta = db.Table('companies_meta',
                           db.Column('company_id', db.Integer, db.ForeignKey(
@@ -85,8 +76,7 @@ class Companies(PaginationAPIMixin, db.Model):
         'cities.city_id'), nullable=False)
     website = db.Column(db.String(255), nullable=False)
     year = db.Column(db.Integer)
-    company_size = db.Column(db.Enum(Sizes, values_callable=lambda x: [
-                             str(member.value) for member in Sizes]), nullable=False)
+    company_size = db.Column(db.String(64), nullable=False)
     city = db.relationship('Cities', backref='company',
                            lazy='joined')
     metas = db.relationship('Meta', secondary=companies_meta,
@@ -107,8 +97,8 @@ class Companies(PaginationAPIMixin, db.Model):
             'city_name': self.city.city_name,
             'website': self.website,
             'year': self.year,
-            'company_size': self.company_size.value,
-            'region': self.city.region.value,
+            'company_size': self.company_size,
+            'region': self.city.region,
             'disciplines': [],
             'tags': [],
             'branches': []
@@ -126,11 +116,11 @@ class Companies(PaginationAPIMixin, db.Model):
 
         # Iterating over all the meta id's to fill the discipline/tags/branches lists
         for meta in self.metas:
-            if meta.type.value == 'disciplines':
+            if meta.type == 'disciplines':
                 data['disciplines'].append(meta.meta_string)
-            elif meta.type.value == 'tags':
+            elif meta.type == 'tags':
                 data['tags'].append(meta.meta_string)
-            elif meta.type.value == 'branches':
+            elif meta.type == 'branches':
                 data['branches'].append(meta.meta_string)
         return data
 
@@ -226,50 +216,23 @@ class Companies(PaginationAPIMixin, db.Model):
                 setattr(self, field, data[field])
 
 
-# Regions enum for cities.region
-class Regions(enum.Enum):
-    RM = 'Remote'
-    DR = 'Drenthe'
-    FL = 'Flevoland'
-    FR = 'Friesland'
-    GD = 'Gelderland'
-    GR = 'Groningen'
-    LB = 'Limburg'
-    NB = 'Noord-Brabant'
-    NH = 'Noord-Holland'
-    OV = 'Overijssel'
-    UT = 'Utrecht'
-    ZH = 'Zuid-Holland'
-    ZL = 'Zeeland'
-
-
 class Cities(db.Model):
     __tablename__ = 'cities'
 
     city_id = db.Column(db.Integer, primary_key=True)
     city_name = db.Column(db.String(64), unique=True, nullable=False)
-    region = db.Column(db.Enum(Regions, values_callable=lambda x: [
-                       str(member.value) for member in Regions]))
+    region = db.Column(db.String(64))
 
     def __repr__(self):
         return '<City ID: {}>'.format(self.city_id)
-
-
-# Types enum for meta.type
-class Types(enum.Enum):
-    ONE = 'disciplines'
-    TWO = 'branches'
-    THREE = 'tags'
 
 
 class Meta(db.Model):
     __tablename__ = 'meta'
 
     meta_id = db.Column(db.Integer, primary_key=True)
-    type = db.Column(db.Enum(Types, values_callable=lambda x: [
-        str(member.value) for member in Types]))
+    type = db.Column(db.String(64))
     meta_string = db.Column(db.String(120))
-    # companies = db.relationship('Companies', secondary = companies_meta, back_populates = 'metas')
 
     def __repr__(self):
         return '<Meta ID {}>'.format(self.meta_id)
@@ -286,6 +249,10 @@ class CitiesSchema(ma.SQLAlchemyAutoSchema):
         model = Cities
         include_fk = True
 
+    # city_id = ma.auto_field()
+    # city_name = ma.auto_field()
+    # region = ma.Str(validate=validate.OneOf(["read", "write", "admin"]))
+
 
 class CompaniesSchema(ma.SQLAlchemySchema):
     class Meta:
@@ -297,6 +264,7 @@ class CompaniesSchema(ma.SQLAlchemySchema):
     company_name = ma.auto_field()
     logo_image_src = ma.auto_field()
     city = ma.Pluck(CitiesSchema, 'city_name')
+    region = ma.Pluck(CitiesSchema, 'region')
     website = ma.auto_field()
     year = ma.auto_field()
     company_size = ma.auto_field()
@@ -309,4 +277,8 @@ meta_schema = MetaSchema()
 companies_schema = CompaniesSchema()
 x = Companies.query.filter_by(company_id=1).first()
 companies_schema.dump(x)
+
+{"branches": [],"city_name": "Rotterdam","company_id": 1,"company_name": "Digital Growth Agency","company_size": "11-50","disciplines": ["Conceptontwikkeling","Conversie-optimalisatie","Strategie","Web development","Webdesign"],"logo_image_src": "https://eguide.nl/media/output/100_100/DIG_logo_trans.png","region": "Zuid-Holland","tags": [],"website": "http://www.digitalgrowthagency.nl/","year": 2019}
+
+{"city": "Rotterdam", "region": "Zuid-Holland","company_id": 1,"company_name": "Digital Growth Agency","company_size": "11-50","logo_image_src": "https://eguide.nl/media/output/100_100/DIG_logo_trans.png","website": "http://www.digitalgrowthagency.nl/","year": 2019}
 '''

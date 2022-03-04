@@ -47,22 +47,36 @@ def import_data(import_file):
     # Opening JSON file
     with open(import_file) as file:
 
-        # returns JSON object as
-        # a dictionary
+        # returns JSON object as a dictionary
         data = json.load(file)
         cities = {}
 
         # Iterating through the agencies in the json file
         for agency in data['agencies']:
 
-            # .strip() ? -> breaks it
+         # Validate region
+            regions = ['Remote', 'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg',
+                       'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zuid-Holland', 'Zeeland']
+            if agency['region'].title() in regions:
+                region = agency['region'].title()
+            else:
+                region = 'Remote'
+
+            # Validate company_size
+            sizes = ['1-10', '11-50', '51-100', 'GT-100']
+            if agency['companySize'] in sizes:
+                company_size = agency['companySize']
+            else:
+                company_size = '1-10'
+
             # Check if the city is already in the cities dict
             if agency['city'].capitalize() not in cities.values():
+
                 # If city is not in the cities dict, add the city and company to the DB
                 city_insert = Cities(
-                    city_name=agency['city'].capitalize(), region=agency['region'])
+                    city_name=agency['city'].capitalize(), region=region)
                 company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'],
-                                           website=agency['website'], year=agency['yearEstablished'], company_size=agency['companySize'])
+                                           website=agency['website'], year=agency['yearEstablished'], company_size=company_size)
                 city_insert.company.append(company_insert)
                 db.session.add(city_insert)
                 db.session.commit()
@@ -78,7 +92,7 @@ def import_data(import_file):
 
                 # Insert the company into the DB
                 company_insert = Companies(company_name=agency['name'], logo_image_src=agency['eguideImageSrc'], city_id=city_id,
-                                           website=agency['website'], year=agency['yearEstablished'], company_size=agency['companySize'])
+                                           website=agency['website'], year=agency['yearEstablished'], company_size=company_size)
                 db.session.add(company_insert)
                 db.session.commit()
 
