@@ -1,9 +1,11 @@
 from app import db, cache
-from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesSchema
 from app.api import bp
 from app.api.errors import bad_request, error_response
+from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesSchema, CompaniesValidationSchema
+from app.import_data_v2 import insert_meta
 from flask import jsonify, request, url_for
 from flask_jwt_extended import create_access_token, jwt_required
+from marshmallow import ValidationError
 
 
 # TODO: Looking into errors, validation and bad requests
@@ -138,24 +140,41 @@ def get_company(id):
 def add_company():
     data = request.get_json() or {}
 
-    # Validation
-    if 'company_id' in data:
-        return bad_request("Create company cannot include company_id. For modifying existing companies please use the PUT method")
-    if 'company_name' not in data:
-        return bad_request("Must include company_name field")
-    if Companies.query.filter_by(company_name=data['company_name']).first():
-        return bad_request("A company with that name already exists, please use another name")
+    try:
+        result = CompaniesValidationSchema().load(data)
+    except ValidationError as err:
+        print(err.messages)
+        print(err.valid_data)
+        return bad_request(err.messages)
 
-    company = Companies()
-    # TODO: Finalize the from_dict method
-    company.from_dict_new(data)
-    db.session.add(company)
-    db.session.commit()
+    # TODO: Validate if company name is already in DB?
 
-    response = jsonify(company.to_dict())
+    new_company = Companies(company_name=result['company_name'], logo_image_src=result['logo_image_src'],
+                            website=result['website'], year=result['year'], company_size=result['company_size'])
+
+    # Check if city is already in DB:
+    city = Cities.query.filter_by(
+        city_name=result['city_name'].capitalize()).first()
+    if city is not None:
+        new_company.city_id = city.city_id
+        db.session.add(new_company)
+        db.session.commit()
+    else:
+        new_city = Cities(
+            city_name=result['city_name'].capitalize(), region=result['region'])
+        new_city.company.append(new_company)
+        db.session.add(new_city)
+        db.session.commit()
+
+    # Insert Meta Data:
+    insert_meta(result['disciplines'], 'disciplines', new_company.company_id)
+    insert_meta(result['branches'], 'branches', new_company.company_id)
+    insert_meta(result['tags'], 'tags', new_company.company_id)
+
+    response = jsonify(new_company.to_dict())
     response.status_code = 201
     response.headers['Location'] = url_for(
-        'api.get_company', id=company.company_id)
+        'api.get_company', id=new_company.company_id)
 
     cache.clear()
     return response

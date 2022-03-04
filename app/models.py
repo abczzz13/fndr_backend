@@ -3,9 +3,11 @@ from datetime import datetime
 from flask import url_for
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
-
+from marshmallow import validate, ValidationError, pre_load, post_load
 
 # Pagination mixin Class
+
+
 class PaginationAPIMixin(object):
     @staticmethod
     def to_collection_dict(query, page, per_page, endpoint, **kwargs):
@@ -272,13 +274,43 @@ class CompaniesSchema(ma.SQLAlchemySchema):
                      many=True)
 
 
-'''
-meta_schema = MetaSchema()
-companies_schema = CompaniesSchema()
-x = Companies.query.filter_by(company_id=1).first()
-companies_schema.dump(x)
+class CompaniesValidationSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = Companies
+        include_fk = True
 
-{"branches": [],"city_name": "Rotterdam","company_id": 1,"company_name": "Digital Growth Agency","company_size": "11-50","disciplines": ["Conceptontwikkeling","Conversie-optimalisatie","Strategie","Web development","Webdesign"],"logo_image_src": "https://eguide.nl/media/output/100_100/DIG_logo_trans.png","region": "Zuid-Holland","tags": [],"website": "http://www.digitalgrowthagency.nl/","year": 2019}
+    # List of regions and city_sizes for validation with CompaniesValidationSchema
+    regions = ['Remote', 'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg',
+               'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zuid-Holland', 'Zeeland']
+    sizes = ['1-10', '11-50', '51-100', 'GT-100']
 
-{"city": "Rotterdam", "region": "Zuid-Holland","company_id": 1,"company_name": "Digital Growth Agency","company_size": "11-50","logo_image_src": "https://eguide.nl/media/output/100_100/DIG_logo_trans.png","website": "http://www.digitalgrowthagency.nl/","year": 2019}
-'''
+    # The Validation fields
+    company_name = ma.Str(validate=validate.Length(
+        min=2, max=64), required=True)
+    logo_image_src = ma.URL()
+    city_name = ma.Str(validate=validate.Length(min=2, max=64), required=True)
+    region = ma.Str(validate=validate.OneOf(regions))
+    website = ma.URL(required=True)
+    year = ma.Int(validate=validate.Range(min=1890, max=datetime.now().year))
+    company_size = ma.Str(validate=validate.OneOf(
+        sizes), required=True)
+    disciplines = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+    branches = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+    tags = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+
+    # Additional Validation checks
+    @pre_load
+    def unwrap_envelope(self, data, **kwargs):
+        if "company_id" in data:
+            raise ValidationError(
+                "Create new company cannot include company_id. For modifying existing companies please use the PATCH method")
+        return data
+
+    @post_load
+    def check_company_name(self, data, **kwargs):
+        company = Companies.query.filter_by(
+            company_name=data['company_name'].title()).first()
+        if company is not None:
+            raise ValidationError(
+                "A company already exists with this company_name. Please use the PATCH method if you would like to modify this company or use a different company_name if you would like to add a different company.")
+        return data

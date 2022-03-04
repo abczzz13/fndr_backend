@@ -10,39 +10,42 @@ import_data('db.json')
 '''
 
 
+def insert_meta(input, type, company_id):
+    if input is not None:
+        # Iterate over the meta type
+        for item in input:
+
+            # Check if the meta string is already in the Meta table
+            item_check = Meta.query.filter_by(
+                type=type, meta_string=item).first()
+
+            # Add the meta string if not in Meta table
+            if item_check is None:
+                item_input = Meta(type=type, meta_string=item)
+                db.session.add(item_input)
+                db.session.commit()
+
+                # Query the newly added meta string from the Meta table
+                item_check = item_input
+
+            # Get the meta_id for the companies_meta table if the meta string was already in the table or just added to the table
+            meta_id = item_check.meta_id
+
+            # Add the company_id and meta_id to the companies_meta table
+            try:
+                meta_input = f'INSERT INTO companies_meta (meta_id, company_id) VALUES ({meta_id}, {company_id}) ON CONFLICT DO NOTHING'
+                db.session.execute(meta_input)
+                db.session.commit()
+            except:
+                print(
+                    f"Company ID ({company_id}) has duplicate meta ({meta_id})")
+    return
+
 # Function to insert meta data
 # Example insert_meta(agency['disciplines'], 'disciplines', company_id)
+
+
 def import_data(import_file):
-    def insert_meta(input, type, company_id):
-        if input is not None:
-            # Iterate over the meta type
-            for item in input:
-
-                # Check if the meta string is already in the Meta table
-                item_check = Meta.query.filter_by(
-                    type=type, meta_string=item).first()
-
-                # Add the meta string if not in Meta table
-                if item_check is None:
-                    item_input = Meta(type=type, meta_string=item)
-                    db.session.add(item_input)
-                    db.session.commit()
-
-                    # Query the newly added meta string from the Meta table
-                    item_check = item_input
-
-                # Get the meta_id for the companies_meta table if the meta string was already in the table or just added to the table
-                meta_id = item_check.meta_id
-
-                # Add the company_id and meta_id to the companies_meta table
-                try:
-                    meta_input = f'INSERT INTO companies_meta (meta_id, company_id) VALUES ({meta_id}, {company_id}) ON CONFLICT DO NOTHING'
-                    db.session.execute(meta_input)
-                    db.session.commit()
-                except:
-                    print(
-                        f"Company ID ({company_id}) has duplicate meta ({meta_id})")
-        return
 
     # Opening JSON file
     with open(import_file) as file:
