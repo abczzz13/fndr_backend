@@ -1,11 +1,13 @@
+from asyncio import exceptions
 from app import db, cache
 from app.api import bp
 from app.api.errors import bad_request, error_response
-from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesSchema, CompaniesValidationSchema
-from app.import_data_v2 import insert_meta
+from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesValidationSchema, CompaniesPatchSchema
+from app.import_data_v2 import insert_meta, insert_city
 from flask import jsonify, request, url_for
 from flask_jwt_extended import create_access_token, jwt_required
 from marshmallow import ValidationError
+import pdb
 
 
 # TODO: Looking into errors, validation and bad requests
@@ -154,14 +156,14 @@ def add_company():
 
     # Check if city is already in DB:
     city = Cities.query.filter_by(
-        city_name=result['city_name'].capitalize()).first()
+        city_name=result['city_name'].title()).first()
     if city is not None:
         new_company.city_id = city.city_id
         db.session.add(new_company)
         db.session.commit()
     else:
         new_city = Cities(
-            city_name=result['city_name'].capitalize(), region=result['region'])
+            city_name=result['city_name'].title(), region=result['region'])
         new_city.company.append(new_company)
         db.session.add(new_city)
         db.session.commit()
@@ -181,19 +183,47 @@ def add_company():
 
 
 # TODO: Create a specific error message when selecting a non-existing company_id
-@bp.route('/v1/companies/<int:id>', methods=['PUT'])
+@bp.route('/v1/companies/<int:id>', methods=['PATCH'])
 @jwt_required()
 def update_company(id):
-    company = Companies.query.get_or_404(id)
+
     data = request.get_json() or {}
-    # TODO: Validation
-    if False:
-        return bad_request('false')
-    # TODO: Finalize the from_dict method
-    company.from_dict(data, new_company=False)
-    db.session.commit()
+
+    try:
+        result = CompaniesPatchSchema().load(data, partial=True)
+    except ValidationError as err:
+        return bad_request(err.messages)
+
+    exceptions = ['city_name', 'disciplines', 'branches', 'tags']
+    for field in exceptions:
+        if field in data:
+            if field == 'city_name':
+                city_dict = insert_city(data)
+                data['city_id'] = city_dict['city_id']
+                data.pop('city_name')
+                data.pop('region')
+            if field in ['disciplines', 'branches', 'tags']:
+                # Remove the old meta information
+                # query = Companies.query
+                # query = query.join(companies_meta).join(Meta).filter(Companies.company_id == id).filter(Meta.type == field).first()
+                # x = companies_meta.join(Meta).query.filter_by(company_id=id)
+                # db.session.delete(x)
+                # db.session.commit()
+                insert_meta(data[field], field, id)
+                data.pop(field)
+
+    if data:
+        Companies.query.filter_by(company_id=id).update(data)
+        db.session.commit()
+
+    company = Companies.query.filter_by(company_id=id).first()
+
+    response = jsonify(company.to_dict())
+    response.status_code = 200
+    response.headers['Location'] = url_for('api.get_company', id=id)
+
     cache.clear()
-    return jsonify(company.to_dict())
+    return response
 
 
 @bp.route('/v1/companies/<int:id>', methods=['DELETE'])
@@ -202,7 +232,6 @@ def delete_company(id):
     company = Companies.query.get_or_404(id)
     db.session.delete(company)
     db.session.commit()
-    cache.clear()
 
     message = {}
     message['message'] = f"Company with company_id={id} has been deleted"
@@ -210,14 +239,5 @@ def delete_company(id):
     response = jsonify(message)
     response.status_code = 200
 
+    cache.clear()
     return response
-
-
-# Test endpoints for marshmallow:
-@bp.route('/v1/marshmallow/<int:id>', methods=['GET'])
-def marshmallow_all(id):
-    companies = Companies.query.filter_by(company_id=id).first()
-
-    x = CompaniesSchema().dump(companies)
-
-    return jsonify(x)

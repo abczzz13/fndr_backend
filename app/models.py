@@ -212,3 +212,39 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
             raise ValidationError(
                 "A company already exists with this company_name. Please use the PATCH method if you would like to modify this company or use a different company_name if you would like to add a different company.")
         return data
+
+
+class CompaniesPatchSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = Companies
+        include_fk = True
+
+    # List of regions and city_sizes for validation with CompaniesValidationSchema
+    regions = ['Remote', 'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg',
+               'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zuid-Holland', 'Zeeland']
+    sizes = ['1-10', '11-50', '51-100', 'GT-100']
+
+    # The Validation fields
+    company_name = ma.Str(validate=validate.Length(
+        min=2, max=64), required=True)
+    logo_image_src = ma.URL()
+    city_name = ma.Str(validate=validate.Length(min=2, max=64), required=True)
+    region = ma.Str(validate=validate.OneOf(regions), dump_only=True)
+    website = ma.URL(required=True)
+    year = ma.Int(validate=validate.Range(min=1890, max=datetime.now().year))
+    company_size = ma.Str(validate=validate.OneOf(
+        sizes), required=True)
+    disciplines = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+    branches = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+    tags = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+
+    # Additional Validation check
+    @post_load
+    def check_company_name(self, data, **kwargs):
+        if 'company_name' in data:
+            company = Companies.query.filter_by(
+                company_name=data['company_name'].title()).first()
+            if company is not None:
+                raise ValidationError(
+                    "A company already exists with this company_name. Please use a different company_name.")
+            return data
