@@ -4,7 +4,6 @@ from app import create_app, db
 from app.import_data_v2 import import_data
 from flask_login import login_user
 from config import TestConfig
-import pdb
 
 
 @pytest.fixture(scope='module')
@@ -36,7 +35,6 @@ def init_testdb(client):
 
 @pytest.fixture(scope='module')
 def insert_data_db(client, init_testdb):
-    pdb.set_trace()
     import_data('test_db.json')
 
 
