@@ -203,19 +203,20 @@ def update_company(id):
                 data.pop('city_name')
                 data.pop('region')
             if field in ['disciplines', 'branches', 'tags']:
-                # Remove the old meta information
-                # query = Companies.query
-                # query = query.join(companies_meta).join(Meta).filter(Companies.company_id == id).filter(Meta.type == field).first()
-                # x = companies_meta.join(Meta).query.filter_by(company_id=id)
-                # db.session.delete(x)
-                # db.session.commit()
+                # TODO: Only removes the records from the companies_meta table, not the actual records in the Meta table (as these could still be in use by other companies)
+                db.session.execute("DELETE FROM companies_meta WHERE companies_meta.company_id = :id AND companies_meta.meta_id IN (SELECT Meta.meta_id FROM Meta WHERE Meta.type = :type)", {
+                                   "id": id, "type": field})
+
+                # Adds the meta data:
                 insert_meta(data[field], field, id)
                 data.pop(field)
 
+    # Make the update in the DB
     if data:
         Companies.query.filter_by(company_id=id).update(data)
         db.session.commit()
 
+    # Create response
     company = Companies.query.filter_by(company_id=id).first()
 
     response = jsonify(company.to_dict())
