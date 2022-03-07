@@ -5,9 +5,8 @@ from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from marshmallow import validate, ValidationError, pre_load, post_load
 
+
 # Pagination mixin Class
-
-
 class PaginationAPIMixin(object):
     @staticmethod
     def to_collection_dict(query, page, per_page, endpoint, **kwargs):
@@ -234,13 +233,14 @@ class CompaniesPatchSchema(ma.SQLAlchemySchema):
     year = ma.Int(validate=validate.Range(min=1890, max=datetime.now().year))
     company_size = ma.Str(validate=validate.OneOf(
         sizes), required=True)
-    disciplines = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+    disciplines = ma.List(
+        ma.Str(validate=validate.Length(min=2, max=120)))
     branches = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
     tags = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
 
     # Additional Validation check
     @post_load
-    def check_company_name(self, data, **kwargs):
+    def company_name_exists(self, data, **kwargs):
         if 'company_name' in data:
             company = Companies.query.filter_by(
                 company_name=data['company_name'].title()).first()
@@ -248,3 +248,4 @@ class CompaniesPatchSchema(ma.SQLAlchemySchema):
                 raise ValidationError(
                     "A company already exists with this company_name. Please use a different company_name.")
             return data
+        return data

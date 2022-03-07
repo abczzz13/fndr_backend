@@ -1,4 +1,3 @@
-from asyncio import exceptions
 from app import db, cache
 from app.api import bp
 from app.api.errors import bad_request, error_response
@@ -7,7 +6,6 @@ from app.import_data_v2 import insert_meta, insert_city
 from flask import jsonify, request, url_for
 from flask_jwt_extended import create_access_token, jwt_required
 from marshmallow import ValidationError
-import pdb
 
 
 # TODO: Looking into errors, validation and bad requests
@@ -182,43 +180,41 @@ def add_company():
     return response
 
 
-# TODO: Create a specific error message when selecting a non-existing company_id
 @bp.route('/v1/companies/<int:id>', methods=['PATCH'])
 @jwt_required()
 def update_company(id):
+    company = Companies.query.get_or_404(id)
 
     data = request.get_json() or {}
 
     try:
-        result = CompaniesPatchSchema().load(data, partial=True)
+        validated_data = CompaniesPatchSchema().load(data, partial=True)
     except ValidationError as err:
         return bad_request(err.messages)
 
-    exceptions = ['city_name', 'disciplines', 'branches', 'tags']
-    for field in exceptions:
-        if field in data:
+    fields_in_related_tables = ['city_name', 'disciplines', 'branches', 'tags']
+    for field in fields_in_related_tables:
+        if field in validated_data:
             if field == 'city_name':
-                city_dict = insert_city(data)
-                data['city_id'] = city_dict['city_id']
-                data.pop('city_name')
-                data.pop('region')
+                city_dict = insert_city(validated_data)
+                validated_data['city_id'] = city_dict['city_id']
+                validated_data.pop('city_name')
             if field in ['disciplines', 'branches', 'tags']:
                 # TODO: Only removes the records from the companies_meta table, not the actual records in the Meta table (as these could still be in use by other companies)
+                # RAW SQL statement for finding orphaned meta records: "SELECT * FROM Meta WHERE meta_id NOT IN (SELECT meta_id FROM companies_meta);"
                 db.session.execute("DELETE FROM companies_meta WHERE companies_meta.company_id = :id AND companies_meta.meta_id IN (SELECT Meta.meta_id FROM Meta WHERE Meta.type = :type)", {
                                    "id": id, "type": field})
 
                 # Adds the meta data:
-                insert_meta(data[field], field, id)
-                data.pop(field)
+                insert_meta(validated_data[field], field, id)
+                validated_data.pop(field)
 
     # Make the update in the DB
-    if data:
-        Companies.query.filter_by(company_id=id).update(data)
-        db.session.commit()
+    for field in validated_data:
+        setattr(company, field, validated_data[field])
+    db.session.commit()
 
     # Create response
-    company = Companies.query.filter_by(company_id=id).first()
-
     response = jsonify(company.to_dict())
     response.status_code = 200
     response.headers['Location'] = url_for('api.get_company', id=id)

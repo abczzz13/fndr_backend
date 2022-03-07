@@ -47,32 +47,38 @@ def test_patch_valid_company(client, get_token, insert_data_db):
     assert result['year'] == 1969
 
 
-def test_patch_invalid_company(client, insert_data_db, get_token):
+def test_patch_invalid_company_name(client, get_token):
     '''
     GIVEN a Flask application configured for testing
-    WHEN a PATCH request is made to /api/v1/companies/2 with a invalid company
+    WHEN a PATCH request is made to /api/v1/companies/2 with an already existing company_name
     THEN check that the response is invalid and particular error messages can be found
     '''
-
     # Create dict for invalid patch request with an already existing company_name
-    data1 = {
+    data = {
         "company_name": "H1 Webdevelopment"
     }
 
-    response1 = client.patch('/api/v1/companies/2', data=json.dumps(data1),
-                             headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
-    result1 = json.loads(response1.get_data(as_text=True))
+    response = client.patch('/api/v1/companies/2', data=json.dumps(data),
+                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    result = json.loads(response.get_data(as_text=True))
 
-    # Create dict for invalid patch request with an company_id and region
-    data2 = {
+    assert result['message']['_schema'][0] == "A company already exists with this company_name. Please use a different company_name."
+
+
+def test_patch_invalid_company_fields(client, get_token):
+    '''
+    GIVEN a Flask application configured for testing
+    WHEN a PATCH request is made to /api/v1/companies/2 with a company_id and region field
+    THEN check that the response is invalid and particular error messages can be found
+    '''
+    data = {
         "region": "Friesland",
         "company_id": 22
     }
 
-    response2 = client.patch('/api/v1/companies/2', data=json.dumps(data2),
-                             headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
-    result2 = json.loads(response2.get_data(as_text=True))
+    response = client.patch('/api/v1/companies/2', data=json.dumps(data),
+                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    result = json.loads(response.get_data(as_text=True))
 
-    assert result1['message']['_schema'][0] == "A company already exists with this company_name. Please use a different company_name."
-    assert result2['message']['region'][0] == "Unknown field."
-    assert result2['message']['company_id'][0] == "Unknown field."
+    assert result['message']['region'][0] == "Unknown field."
+    assert result['message']['company_id'][0] == "Unknown field."
