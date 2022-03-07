@@ -23,6 +23,9 @@ def client():
 
 @pytest.fixture(scope='module')
 def init_testdb():
+    # To make sure to start with a clean slate:
+    db.drop_all()
+
     # Create the database
     db.create_all()
 
@@ -50,7 +53,6 @@ def new_user(init_testdb):
     return new_user
 
 
-# TODO: How to use the token in other tests?
 @pytest.fixture(scope='module')
 def get_token(client, init_testdb, new_user):
 

@@ -1,7 +1,7 @@
 from app import db, cache
 from app.api import bp
 from app.api.errors import bad_request, error_response
-from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesSchema, CompaniesValidationSchema
+from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesValidationSchema
 from app.import_data_v2 import insert_meta
 from flask import jsonify, request, url_for
 from flask_jwt_extended import create_access_token, jwt_required
