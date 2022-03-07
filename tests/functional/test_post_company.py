@@ -89,7 +89,7 @@ def test_post_invalid_company_id(client, insert_data_db, get_token):
     assert result['message']['_schema'][0] == "Create new company cannot include company_id. For modifying existing companies please use the PATCH method"
 
 
-def test_post_invalid_company_name(client, insert_data_db, get_token):
+def test_post_invalid_company_name(client, get_token):
     '''
     GIVEN a Flask application configured for testing
     WHEN a POST request is made to /api/v1/companies with an already existing company name
@@ -128,7 +128,7 @@ def test_post_invalid_company_name(client, insert_data_db, get_token):
     assert result['message']['_schema'][0] == "A company already exists with this company_name. Please use the PATCH method if you would like to modify this company or use a different company_name if you would like to add a different company."
 
 
-def test_post_invalid_company_required_fields(client, insert_data_db, get_token):
+def test_post_invalid_company_required_fields(client, get_token):
     '''
     GIVEN a Flask application configured for testing
     WHEN a POST request is made to /api/v1/companies with a missing required fields

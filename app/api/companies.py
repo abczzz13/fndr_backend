@@ -143,28 +143,18 @@ def add_company():
     try:
         validated_data = CompaniesValidationSchema().load(data)
     except ValidationError as err:
-        print(err.messages)
-        print(err.valid_data)
         return bad_request(err.messages)
 
-    # TODO: Validate if company name is already in DB?
+    # Check if city is already in DB:
+    city = Cities()
+    city_id = city.get_or_create(
+        validated_data['city_name'], validated_data['region'])
 
     new_company = Companies(company_name=validated_data['company_name'], logo_image_src=validated_data['logo_image_src'],
-                            website=validated_data['website'], year=validated_data['year'], company_size=validated_data['company_size'])
+                            website=validated_data['website'], year=validated_data['year'], company_size=validated_data['company_size'], city_id=city_id)
 
-    # Check if city is already in DB:
-    city = Cities.query.filter_by(
-        city_name=validated_data['city_name'].capitalize()).first()
-    if city is not None:
-        new_company.city_id = city.city_id
-        db.session.add(new_company)
-        db.session.commit()
-    else:
-        new_city = Cities(
-            city_name=validated_data['city_name'].capitalize(), region=validated_data['region'])
-        new_city.company.append(new_company)
-        db.session.add(new_city)
-        db.session.commit()
+    db.session.add(new_company)
+    db.session.commit()
 
     # Insert Meta Data:
     insert_meta(validated_data['disciplines'],
@@ -172,6 +162,7 @@ def add_company():
     insert_meta(validated_data['branches'], 'branches', new_company.company_id)
     insert_meta(validated_data['tags'], 'tags', new_company.company_id)
 
+    # Create response
     response = jsonify(new_company.to_dict())
     response.status_code = 201
     response.headers['Location'] = url_for(
