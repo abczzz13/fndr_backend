@@ -1,9 +1,11 @@
 from app import db, cache
-from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesSchema
 from app.api import bp
 from app.api.errors import bad_request, error_response
+from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesValidationSchema, CompaniesPatchSchema
+from app.import_data_v2 import insert_meta, insert_city
 from flask import jsonify, request, url_for
 from flask_jwt_extended import create_access_token, jwt_required
+from marshmallow import ValidationError
 
 
 # TODO: Looking into errors, validation and bad requests
@@ -138,43 +140,87 @@ def get_company(id):
 def add_company():
     data = request.get_json() or {}
 
-    # Validation
-    if 'company_id' in data:
-        return bad_request("Create company cannot include company_id. For modifying existing companies please use the PUT method")
-    if 'company_name' not in data:
-        return bad_request("Must include company_name field")
-    if Companies.query.filter_by(company_name=data['company_name']).first():
-        return bad_request("A company with that name already exists, please use another name")
+    try:
+        result = CompaniesValidationSchema().load(data)
+    except ValidationError as err:
+        print(err.messages)
+        print(err.valid_data)
+        return bad_request(err.messages)
 
-    company = Companies()
-    # TODO: Finalize the from_dict method
-    company.from_dict_new(data)
-    db.session.add(company)
-    db.session.commit()
+    # TODO: Validate if company name is already in DB?
 
-    response = jsonify(company.to_dict())
+    new_company = Companies(company_name=result['company_name'], logo_image_src=result['logo_image_src'],
+                            website=result['website'], year=result['year'], company_size=result['company_size'])
+
+    # Check if city is already in DB:
+    city = Cities.query.filter_by(
+        city_name=result['city_name'].title()).first()
+    if city is not None:
+        new_company.city_id = city.city_id
+        db.session.add(new_company)
+        db.session.commit()
+    else:
+        new_city = Cities(
+            city_name=result['city_name'].title(), region=result['region'])
+        new_city.company.append(new_company)
+        db.session.add(new_city)
+        db.session.commit()
+
+    # Insert Meta Data:
+    insert_meta(result['disciplines'], 'disciplines', new_company.company_id)
+    insert_meta(result['branches'], 'branches', new_company.company_id)
+    insert_meta(result['tags'], 'tags', new_company.company_id)
+
+    response = jsonify(new_company.to_dict())
     response.status_code = 201
     response.headers['Location'] = url_for(
-        'api.get_company', id=company.company_id)
+        'api.get_company', id=new_company.company_id)
 
     cache.clear()
     return response
 
 
-# TODO: Create a specific error message when selecting a non-existing company_id
-@bp.route('/v1/companies/<int:id>', methods=['PUT'])
+@bp.route('/v1/companies/<int:id>', methods=['PATCH'])
 @jwt_required()
 def update_company(id):
     company = Companies.query.get_or_404(id)
+
     data = request.get_json() or {}
-    # TODO: Validation
-    if False:
-        return bad_request('false')
-    # TODO: Finalize the from_dict method
-    company.from_dict(data, new_company=False)
+
+    try:
+        validated_data = CompaniesPatchSchema().load(data, partial=True)
+    except ValidationError as err:
+        return bad_request(err.messages)
+
+    fields_in_related_tables = ['city_name', 'disciplines', 'branches', 'tags']
+    for field in fields_in_related_tables:
+        if field in validated_data:
+            if field == 'city_name':
+                city_dict = insert_city(validated_data)
+                validated_data['city_id'] = city_dict['city_id']
+                validated_data.pop('city_name')
+            if field in ['disciplines', 'branches', 'tags']:
+                # TODO: Only removes the records from the companies_meta table, not the actual records in the Meta table (as these could still be in use by other companies)
+                # RAW SQL statement for finding orphaned meta records: "SELECT * FROM Meta WHERE meta_id NOT IN (SELECT meta_id FROM companies_meta);"
+                db.session.execute("DELETE FROM companies_meta WHERE companies_meta.company_id = :id AND companies_meta.meta_id IN (SELECT Meta.meta_id FROM Meta WHERE Meta.type = :type)", {
+                                   "id": id, "type": field})
+
+                # Adds the meta data:
+                insert_meta(validated_data[field], field, id)
+                validated_data.pop(field)
+
+    # Make the update in the DB
+    for field in validated_data:
+        setattr(company, field, validated_data[field])
     db.session.commit()
+
+    # Create response
+    response = jsonify(company.to_dict())
+    response.status_code = 200
+    response.headers['Location'] = url_for('api.get_company', id=id)
+
     cache.clear()
-    return jsonify(company.to_dict())
+    return response
 
 
 @bp.route('/v1/companies/<int:id>', methods=['DELETE'])
@@ -183,7 +229,6 @@ def delete_company(id):
     company = Companies.query.get_or_404(id)
     db.session.delete(company)
     db.session.commit()
-    cache.clear()
 
     message = {}
     message['message'] = f"Company with company_id={id} has been deleted"
@@ -191,14 +236,5 @@ def delete_company(id):
     response = jsonify(message)
     response.status_code = 200
 
+    cache.clear()
     return response
-
-
-# Test endpoints for marshmallow:
-@bp.route('/v1/marshmallow/<int:id>', methods=['GET'])
-def marshmallow_all(id):
-    companies = Companies.query.filter_by(company_id=id).first()
-
-    x = CompaniesSchema().dump(companies)
-
-    return jsonify(x)

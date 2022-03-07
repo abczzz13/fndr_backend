@@ -3,6 +3,7 @@ from datetime import datetime
 from flask import url_for
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
+from marshmallow import validate, ValidationError, pre_load, post_load
 
 
 # Pagination mixin Class
@@ -104,17 +105,6 @@ class Companies(PaginationAPIMixin, db.Model):
             'branches': []
         }
 
-        # if self.city_name is not None:
-        #     data['city_name'] = self.city_name
-        # else:
-        #     data['city_name'] = ''
-
-        # if self.city.region.value is not None:
-        #     data['region'] = self.city.region.value
-        # else:
-        #     data['region'] = 'Unknown'
-
-        # Iterating over all the meta id's to fill the discipline/tags/branches lists
         for meta in self.metas:
             if meta.type == 'disciplines':
                 data['disciplines'].append(meta.meta_string)
@@ -123,97 +113,6 @@ class Companies(PaginationAPIMixin, db.Model):
             elif meta.type == 'branches':
                 data['branches'].append(meta.meta_string)
         return data
-
-    def from_dict(self, data, new_company=False):
-        # TODO:
-        # Check if city is already in Cities table, otherwise add it
-        # If new company, add meta input
-        # If existing company, remove old meta input, check if meta input already exists in Meta db, otherwise add it
-        # Add company information
-        pass
-
-    def from_dict_new(self, data):
-
-        # Add Companies fields
-        for field in ['company_name', 'logo_image_src', 'website', 'year', 'company_size']:
-            if field in data:
-                setattr(self, field, data[field])
-            else:
-                if field == 'company_size':
-                    setattr(self, field, 'Unknown')
-                else:
-                    setattr(self, field, '')
-
-        # TODO: method / endpoint still breaks if not all data fields are supplied
-        # Check if city is already in Cities table
-        if 'city_name' in data:
-            city = Cities.query.filter_by(city_name=data['city_name']).first()
-            if city is None:
-                if 'region' in data:
-                    region = data['region']
-                else:
-                    region = 'Unknown'
-                new_city = Cities(city_name=data['city_name'], region=region)
-                new_city.company.append(self)
-            else:
-                setattr(self, 'city_id', city.city_id)
-        # else:
-            # setattr(self, 'city_id', '')
-            # self.city_name = ''
-            # self.city.region = 'Unknown'
-
-            # Check if the disciplines, branches, tags already in Meta table, otherwise add it
-        for field in ['disciplines', 'branches', 'tags']:
-            if field in data:
-                for item in data[field]:
-                    # Lookup if item is already in Meta table
-                    meta = Meta.query.filter_by(
-                        meta_string=item, type=field).first()
-                    if meta == 1:
-                        self.metas.append(meta)
-                    # If not in table add it:
-                    else:
-                        new_meta = Meta(meta_string=item, type=field)
-                        self.metas.append(new_meta)
-            else:
-                setattr(self, field, '')
-
-        return self
-
-    def from_dict_adjust(self, data):
-        # Check if city is already in Cities table, otherwise add it
-        if 'city_name' in data:
-            # Check if city is already in Cities table
-            city = Cities.query.filter_by(city_name=data['city_name']).first()
-
-            # If city not in Cities table, add it
-            if city == 0:
-                new_city = Cities(
-                    city_name=data['city_name'], region=data['region'])
-                self.city.append(new_city)
-            # If city in Cities table, change the city_id in the Companies table
-            else:
-                setattr(self, 'city_id', city.city_id)
-
-        # Check if the disciplines, branches, tags already in Meta table, otherwise add it
-        # TODO:
-        for field in ['disciplines', 'branches', 'tags']:
-            if field in data:
-                for item in data[field]:
-                    # Also remove the previous records in the database self.metas.remove(...)?
-                    # Lookup if item is already in Meta table
-                    meta = Meta.query.filter_by(
-                        meta_string=item, type=field).first()
-                    if meta == 1:
-                        self.metas.append(meta)
-                    # If not in table add it:
-                    else:
-                        new_meta = Meta(meta_string=item, type=field)
-                        self.metas.append(new_meta)
-        # Add Companies fields
-        for field in ['company_name', 'logo_image_src', 'website', 'year', 'company_size']:
-            if field in data:
-                setattr(self, field, data[field])
 
 
 class Cities(db.Model):
@@ -272,13 +171,81 @@ class CompaniesSchema(ma.SQLAlchemySchema):
                      many=True)
 
 
-'''
-meta_schema = MetaSchema()
-companies_schema = CompaniesSchema()
-x = Companies.query.filter_by(company_id=1).first()
-companies_schema.dump(x)
+class CompaniesValidationSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = Companies
+        include_fk = True
 
-{"branches": [],"city_name": "Rotterdam","company_id": 1,"company_name": "Digital Growth Agency","company_size": "11-50","disciplines": ["Conceptontwikkeling","Conversie-optimalisatie","Strategie","Web development","Webdesign"],"logo_image_src": "https://eguide.nl/media/output/100_100/DIG_logo_trans.png","region": "Zuid-Holland","tags": [],"website": "http://www.digitalgrowthagency.nl/","year": 2019}
+    # List of regions and city_sizes for validation with CompaniesValidationSchema
+    regions = ['Remote', 'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg',
+               'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zuid-Holland', 'Zeeland']
+    sizes = ['1-10', '11-50', '51-100', 'GT-100']
 
-{"city": "Rotterdam", "region": "Zuid-Holland","company_id": 1,"company_name": "Digital Growth Agency","company_size": "11-50","logo_image_src": "https://eguide.nl/media/output/100_100/DIG_logo_trans.png","website": "http://www.digitalgrowthagency.nl/","year": 2019}
-'''
+    # The Validation fields
+    company_name = ma.Str(validate=validate.Length(
+        min=2, max=64), required=True)
+    logo_image_src = ma.URL()
+    city_name = ma.Str(validate=validate.Length(min=2, max=64), required=True)
+    region = ma.Str(validate=validate.OneOf(regions))
+    website = ma.URL(required=True)
+    year = ma.Int(validate=validate.Range(min=1890, max=datetime.now().year))
+    company_size = ma.Str(validate=validate.OneOf(
+        sizes), required=True)
+    disciplines = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+    branches = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+    tags = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+
+    # Additional Validation checks
+    @pre_load
+    def unwrap_envelope(self, data, **kwargs):
+        if "company_id" in data:
+            raise ValidationError(
+                "Create new company cannot include company_id. For modifying existing companies please use the PATCH method")
+        return data
+
+    @post_load
+    def check_company_name(self, data, **kwargs):
+        company = Companies.query.filter_by(
+            company_name=data['company_name'].title()).first()
+        if company is not None:
+            raise ValidationError(
+                "A company already exists with this company_name. Please use the PATCH method if you would like to modify this company or use a different company_name if you would like to add a different company.")
+        return data
+
+
+class CompaniesPatchSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = Companies
+        include_fk = True
+
+    # List of regions and city_sizes for validation with CompaniesValidationSchema
+    regions = ['Remote', 'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg',
+               'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zuid-Holland', 'Zeeland']
+    sizes = ['1-10', '11-50', '51-100', 'GT-100']
+
+    # The Validation fields
+    company_name = ma.Str(validate=validate.Length(
+        min=2, max=64), required=True)
+    logo_image_src = ma.URL()
+    city_name = ma.Str(validate=validate.Length(min=2, max=64), required=True)
+    region = ma.Str(validate=validate.OneOf(regions), dump_only=True)
+    website = ma.URL(required=True)
+    year = ma.Int(validate=validate.Range(min=1890, max=datetime.now().year))
+    company_size = ma.Str(validate=validate.OneOf(
+        sizes), required=True)
+    disciplines = ma.List(
+        ma.Str(validate=validate.Length(min=2, max=120)))
+    branches = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+    tags = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+
+    # Additional Validation check
+    @post_load
+    def company_name_exists(self, data, **kwargs):
+        if 'company_name' in data:
+            company = Companies.query.filter_by(
+                company_name=data['company_name'].title()).first()
+            if company is not None:
+                raise ValidationError(
+                    "A company already exists with this company_name. Please use a different company_name.")
+            return data
+        return data
