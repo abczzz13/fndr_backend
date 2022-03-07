@@ -60,6 +60,8 @@ class Users(UserMixin, db.Model):
             'email': self.email
         }
 
+        return data
+
 
 @login.user_loader
 def load_user(id):
@@ -289,7 +291,8 @@ class NewAdminSchema(ma.SQLAlchemySchema):
 
     # The Validation Field:
     username = ma.Str(validate=validate.Length(min=2, max=64), required=True)
-    email = ma.Email(validate=validate.Email, validate=validate.Length(min=6, max=128), required=True)
+    email = ma.Email(validate=validate.Length(min=2, max=64),
+                     required=True)  # validate.Email?
     password = ma.Str(validate=validate.Length(
         min=8, max=64), required=True, load_only=True)
 

@@ -1,10 +1,10 @@
-from xml.dom import ValidationErr
 from app import db, cache
 from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesSchema, NewAdminSchema
 from app.api import bp
 from app.api.errors import bad_request, error_response
 from flask import jsonify, request, url_for
 from flask_jwt_extended import create_access_token, jwt_required
+from marshmallow import ValidationError
 
 
 # TODO: Looking into errors, validation and bad requests
@@ -49,7 +49,7 @@ def register_admin():
 
     db.session.add(new_admin)
     db.session.commit()
-
+    print(new_admin)
     response = jsonify(new_admin.to_dict())
     response.status_code = 201
 

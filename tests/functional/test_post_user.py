@@ -81,27 +81,18 @@ def test_post_invalid_user(client, get_token):
         "email": "x@x.x",
         "password": "abcd"
     }
-    data3 = {
-        "username": "Test Gebruiker #324",
-        "email": "geenemailadres",
-        "password": "abcdefgh"
-    }
 
     response1 = client.post('/api/v1/register', data=json.dumps(data1),
                             headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
     response2 = client.post('/api/v1/register', data=json.dumps(data2),
                             headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
-    response3 = client.post('/api/v1/register', data=json.dumps(data3),
-                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
 
     result1 = json.loads(response1.get_data(as_text=True))
     result2 = json.loads(response2.get_data(as_text=True))
-    result3 = json.loads(response3.get_data(as_text=True))
 
     assert result1['message']['username'][0] == "Missing data for required field."
     assert result1['message']['email'][0] == "Missing data for required field."
     assert result1['message']['password'][0] == "Missing data for required field."
-    assert result2['message']['username'][0] == ""  # ?
-    assert result2['message']['email'][0] == ""  # ?
-    assert result2['message']['password'][0] == ""  # ?
-    assert result3['message']['email'][0] == ""  # ?
+    assert result2['message']['username'][0] == "Length must be between 2 and 64."
+    assert result2['message']['email'][0] == "Not a valid email address."
+    assert result2['message']['password'][0] == "Length must be between 8 and 64."
