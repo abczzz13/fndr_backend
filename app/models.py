@@ -2,6 +2,7 @@ from app import db, login, ma
 from datetime import datetime
 from flask import url_for
 from flask_login import UserMixin
+from marshmallow import validate, ValidationError, post_load
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
@@ -36,10 +37,14 @@ class Users(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(128), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
+    username = db.Column(db.String(64), index=True,
+                         unique=True, nullable=False)
+    email = db.Column(db.String(128), index=True, unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return '<User {}'.format(self.username)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -47,8 +52,13 @@ class Users(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def __repr__(self):
-        return '<User {}'.format(self.username)
+    def to_dict(self):
+
+        data = {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email
+        }
 
 
 @login.user_loader
@@ -272,13 +282,26 @@ class CompaniesSchema(ma.SQLAlchemySchema):
                      many=True)
 
 
-'''
-meta_schema = MetaSchema()
-companies_schema = CompaniesSchema()
-x = Companies.query.filter_by(company_id=1).first()
-companies_schema.dump(x)
+class NewAdminSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = Users
+        include_fk = True
 
-{"branches": [],"city_name": "Rotterdam","company_id": 1,"company_name": "Digital Growth Agency","company_size": "11-50","disciplines": ["Conceptontwikkeling","Conversie-optimalisatie","Strategie","Web development","Webdesign"],"logo_image_src": "https://eguide.nl/media/output/100_100/DIG_logo_trans.png","region": "Zuid-Holland","tags": [],"website": "http://www.digitalgrowthagency.nl/","year": 2019}
+    # The Validation Field:
+    username = ma.Str(validate=validate.Length(min=2, max=64), required=True)
+    email = ma.Email(validate=validate.Length(min=5, max=128), required=True)
+    password = ma.Str(required=True, load_only=True)
 
-{"city": "Rotterdam", "region": "Zuid-Holland","company_id": 1,"company_name": "Digital Growth Agency","company_size": "11-50","logo_image_src": "https://eguide.nl/media/output/100_100/DIG_logo_trans.png","website": "http://www.digitalgrowthagency.nl/","year": 2019}
-'''
+    @post_load
+    def username_exists(self, data, **kwargs):
+        if Users.query.filter(Users.username == data['username']).first() is not None:
+            raise ValidationError(
+                "This username is already in use, please use a different username.")
+        return data
+
+    @post_load
+    def email_exists(self, data, **kwargs):
+        if Users.query.filter(Users.email == data['email']).first() is not None:
+            raise ValidationError(
+                "This email address is already in use, please use a different email address.")
+        return data
