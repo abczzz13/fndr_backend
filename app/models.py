@@ -184,14 +184,14 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
 
     # Additional Validation checks
     @pre_load
-    def unwrap_envelope(self, data, **kwargs):
+    def company_id_exists(self, data, **kwargs):
         if "company_id" in data:
             raise ValidationError(
                 "Create new company cannot include company_id. For modifying existing companies please use the PATCH method")
         return data
 
     @post_load
-    def check_company_name(self, data, **kwargs):
+    def company_name_exists(self, data, **kwargs):
         company = Companies.query.filter_by(
             company_name=data['company_name'].title()).first()
         if company is not None:
