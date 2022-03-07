@@ -141,7 +141,7 @@ def add_company():
     data = request.get_json() or {}
 
     try:
-        result = CompaniesValidationSchema().load(data)
+        validated_data = CompaniesValidationSchema().load(data)
     except ValidationError as err:
         print(err.messages)
         print(err.valid_data)
@@ -149,27 +149,28 @@ def add_company():
 
     # TODO: Validate if company name is already in DB?
 
-    new_company = Companies(company_name=result['company_name'], logo_image_src=result['logo_image_src'],
-                            website=result['website'], year=result['year'], company_size=result['company_size'])
+    new_company = Companies(company_name=validated_data['company_name'], logo_image_src=validated_data['logo_image_src'],
+                            website=validated_data['website'], year=validated_data['year'], company_size=validated_data['company_size'])
 
     # Check if city is already in DB:
     city = Cities.query.filter_by(
-        city_name=result['city_name'].capitalize()).first()
+        city_name=validated_data['city_name'].capitalize()).first()
     if city is not None:
         new_company.city_id = city.city_id
         db.session.add(new_company)
         db.session.commit()
     else:
         new_city = Cities(
-            city_name=result['city_name'].capitalize(), region=result['region'])
+            city_name=validated_data['city_name'].capitalize(), region=validated_data['region'])
         new_city.company.append(new_company)
         db.session.add(new_city)
         db.session.commit()
 
     # Insert Meta Data:
-    insert_meta(result['disciplines'], 'disciplines', new_company.company_id)
-    insert_meta(result['branches'], 'branches', new_company.company_id)
-    insert_meta(result['tags'], 'tags', new_company.company_id)
+    insert_meta(validated_data['disciplines'],
+                'disciplines', new_company.company_id)
+    insert_meta(validated_data['branches'], 'branches', new_company.company_id)
+    insert_meta(validated_data['tags'], 'tags', new_company.company_id)
 
     response = jsonify(new_company.to_dict())
     response.status_code = 201
