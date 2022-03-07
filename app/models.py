@@ -289,7 +289,7 @@ class NewAdminSchema(ma.SQLAlchemySchema):
 
     # The Validation Field:
     username = ma.Str(validate=validate.Length(min=2, max=64), required=True)
-    email = ma.Email(validate=validate.Length(min=6, max=128), required=True)
+    email = ma.Email(validate=validate.Email, validate=validate.Length(min=6, max=128), required=True)
     password = ma.Str(validate=validate.Length(
         min=8, max=64), required=True, load_only=True)
 
