@@ -22,7 +22,7 @@ def test_post_valid_user(client, get_token):
     user = Users.query.filter_by(username=data['username']).first()
 
     assert response.status_code == 201
-    assert result['id'] == 1
+    assert result['id'] == 2
     assert result['username'] == 'Test Gebruiker #323'
     assert user.check_password(data['password']) == True
     assert user.check_password('heelwatanders') == False
@@ -36,7 +36,7 @@ def test_post_invalid_username(client, get_token):
     '''
     data = {
         "username": "Test Gebruiker #323",
-        "email": "test@test.com",
+        "email": "testtest@test.com",
         "password": "abcdefgh"
     }
 
