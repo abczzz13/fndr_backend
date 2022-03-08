@@ -49,7 +49,7 @@ def register_admin():
 
     db.session.add(new_admin)
     db.session.commit()
-    print(new_admin)
+
     response = jsonify(new_admin.to_dict())
     response.status_code = 201
 
