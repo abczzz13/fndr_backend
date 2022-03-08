@@ -2,9 +2,8 @@ from app import db, login, ma
 from datetime import datetime
 from flask import url_for
 from flask_login import UserMixin
-from marshmallow import validate, ValidationError, post_load
-from werkzeug.security import generate_password_hash, check_password_hash
 from marshmallow import validate, ValidationError, pre_load, post_load
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # Pagination mixin Class
@@ -169,7 +168,7 @@ class Meta(db.Model):
             setattr(self, 'meta_id', query.meta_id)
         return self.meta_id
 
-    
+
 class NewAdminSchema(ma.SQLAlchemySchema):
     class Meta:
         model = Users
