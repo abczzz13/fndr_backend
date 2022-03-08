@@ -1,7 +1,6 @@
 import json
 from app import db
 from app.models import Companies, Cities, Meta, companies_meta
-
 '''
 Run within Flask Shell
 Run the following commands in the Flask Shell:
@@ -10,32 +9,14 @@ import_data('db.json')
 '''
 
 
-def insert_meta(input, type, company_id):
-    '''
-    Function to insert meta data
-    Example insert_meta(agency['disciplines'], 'disciplines', company_id)
-    '''
-    if input is not None:
-        # Iterate over the meta type
-        for item in input:
+def insert_meta(meta_list, type, company_id):
+    if meta_list is not None:
 
-            # Check if the meta string is already in the Meta table
-            item_check = Meta.query.filter_by(
-                type=type, meta_string=item).first()
+        for meta_string in meta_list:
 
-            # Add the meta string if not in Meta table
-            if item_check is None:
-                item_input = Meta(type=type, meta_string=item)
-                db.session.add(item_input)
-                db.session.commit()
+            meta = Meta()
+            meta_id = meta.get_or_create(meta_string, type)
 
-                # Query the newly added meta string from the Meta table
-                item_check = item_input
-
-            # Get the meta_id for the companies_meta table if the meta string was already in the table or just added to the table
-            meta_id = item_check.meta_id
-
-            # Add the company_id and meta_id to the companies_meta table
             try:
                 meta_input = f'INSERT INTO companies_meta (meta_id, company_id) VALUES ({meta_id}, {company_id}) ON CONFLICT DO NOTHING'
                 db.session.execute(meta_input)
@@ -44,8 +25,8 @@ def insert_meta(input, type, company_id):
                 print(
                     f"Company ID ({company_id}) has duplicate meta ({meta_id})")
     return
-
-
+  
+  
 def insert_city(dict):
     '''
 

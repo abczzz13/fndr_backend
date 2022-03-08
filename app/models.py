@@ -28,7 +28,6 @@ class PaginationAPIMixin(object):
                 'next': url_for(endpoint, page=page + 1, per_page=per_page, **kwargs) if resources.has_next else None,
                 'previous': url_for(endpoint, page=page - 1, per_page=per_page, **kwargs) if resources.has_prev else None
             }
-
         }
         return data
 
@@ -64,7 +63,6 @@ companies_meta = db.Table('companies_meta',
                           db.Column('meta_id', db.Integer, db.ForeignKey(
                               'meta.meta_id'))
                           )
-# TODO: implement ondelete='CASCADE' somewhere...
 
 
 class Companies(PaginationAPIMixin, db.Model):
@@ -104,7 +102,6 @@ class Companies(PaginationAPIMixin, db.Model):
             'tags': [],
             'branches': []
         }
-
         for meta in self.metas:
             if meta.type == 'disciplines':
                 data['disciplines'].append(meta.meta_string)
@@ -112,6 +109,7 @@ class Companies(PaginationAPIMixin, db.Model):
                 data['tags'].append(meta.meta_string)
             elif meta.type == 'branches':
                 data['branches'].append(meta.meta_string)
+
         return data
 
 
@@ -125,6 +123,17 @@ class Cities(db.Model):
     def __repr__(self):
         return '<City ID: {}>'.format(self.city_id)
 
+    def get_or_create(self, city, region):
+        query = Cities.query.filter_by(city_name=city.title()).first()
+        if query is None:
+            new_city = Cities(city_name=city.title(), region=region)
+            db.session.add(new_city)
+            db.session.commit()
+            setattr(self, 'city_id', new_city.city_id)
+        else:
+            setattr(self, 'city_id', query.city_id)
+        return self.city_id
+
 
 class Meta(db.Model):
     __tablename__ = 'meta'
@@ -136,39 +145,17 @@ class Meta(db.Model):
     def __repr__(self):
         return '<Meta ID {}>'.format(self.meta_id)
 
-
-class MetaSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Meta
-        include_fk = True
-
-
-class CitiesSchema(ma.SQLAlchemyAutoSchema):
-    class Meta:
-        model = Cities
-        include_fk = True
-
-    # city_id = ma.auto_field()
-    # city_name = ma.auto_field()
-    # region = ma.Str(validate=validate.OneOf(["read", "write", "admin"]))
-
-
-class CompaniesSchema(ma.SQLAlchemySchema):
-    class Meta:
-        model = Companies
-        include_fk = True
-        # ordered = True
-
-    company_id = ma.auto_field()
-    company_name = ma.auto_field()
-    logo_image_src = ma.auto_field()
-    city = ma.Pluck(CitiesSchema, 'city_name')
-    region = ma.Pluck(CitiesSchema, 'region')
-    website = ma.auto_field()
-    year = ma.auto_field()
-    company_size = ma.auto_field()
-    meta = ma.Nested(MetaSchema, attribute='metas',
-                     many=True)
+    def get_or_create(self, meta_string, type):
+        query = Meta.query.filter_by(
+            type=type, meta_string=meta_string).first()
+        if query is None:
+            new_meta = Meta(type=type, meta_string=meta_string)
+            db.session.add(new_meta)
+            db.session.commit()
+            setattr(self, 'meta_id', new_meta.meta_id)
+        else:
+            setattr(self, 'meta_id', query.meta_id)
+        return self.meta_id
 
 
 class CompaniesValidationSchema(ma.SQLAlchemySchema):
@@ -197,14 +184,14 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
 
     # Additional Validation checks
     @pre_load
-    def unwrap_envelope(self, data, **kwargs):
+    def company_id_exists(self, data, **kwargs):
         if "company_id" in data:
             raise ValidationError(
                 "Create new company cannot include company_id. For modifying existing companies please use the PATCH method")
         return data
 
     @post_load
-    def check_company_name(self, data, **kwargs):
+    def company_name_exists(self, data, **kwargs):
         company = Companies.query.filter_by(
             company_name=data['company_name'].title()).first()
         if company is not None:
