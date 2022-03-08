@@ -1,7 +1,7 @@
 from app import db, cache
 from app.api import bp
 from app.api.errors import bad_request, error_response
-from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesValidationSchema, CompaniesPatchSchema
+from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesValidationSchema, CompaniesPatchSchema, NewAdminSchema
 from app.import_data_v2 import insert_meta, insert_city
 from flask import jsonify, request, url_for
 from flask_jwt_extended import create_access_token, jwt_required
@@ -32,6 +32,29 @@ def create_token():
 def revoke_token():
     # TODO: Revoke token
     pass
+
+
+@bp.route('v1/register', methods=['POST'])
+@jwt_required()
+def register_admin():
+    data = request.get_json() or {}
+
+    try:
+        validated_data = NewAdminSchema().load(data)
+    except ValidationError as err:
+        return bad_request(err.messages)
+
+    new_admin = Users(
+        username=validated_data['username'], email=validated_data['email'])
+    new_admin.set_password(validated_data['password'])
+
+    db.session.add(new_admin)
+    db.session.commit()
+
+    response = jsonify(new_admin.to_dict())
+    response.status_code = 201
+
+    return response
 
 
 @bp.route('/v1/cities')

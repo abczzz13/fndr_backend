@@ -2,6 +2,7 @@ from app import db, login, ma
 from datetime import datetime
 from flask import url_for
 from flask_login import UserMixin
+from marshmallow import validate, ValidationError, post_load
 from werkzeug.security import generate_password_hash, check_password_hash
 from marshmallow import validate, ValidationError, pre_load, post_load
 
@@ -36,10 +37,14 @@ class Users(UserMixin, db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True, unique=True)
-    email = db.Column(db.String(128), index=True, unique=True)
-    password_hash = db.Column(db.String(128))
+    username = db.Column(db.String(64), index=True,
+                         unique=True, nullable=False)
+    email = db.Column(db.String(128), index=True, unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return '<User {}'.format(self.username)
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -47,8 +52,15 @@ class Users(UserMixin, db.Model):
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-    def __repr__(self):
-        return '<User {}'.format(self.username)
+    def to_dict(self):
+
+        data = {
+            'id': self.id,
+            'username': self.username,
+            'email': self.email
+        }
+
+        return data
 
 
 @login.user_loader
@@ -156,6 +168,32 @@ class Meta(db.Model):
         else:
             setattr(self, 'meta_id', query.meta_id)
         return self.meta_id
+
+    
+class NewAdminSchema(ma.SQLAlchemySchema):
+    class Meta:
+        model = Users
+        include_fk = True
+
+    # The Validation Field:
+    username = ma.Str(validate=validate.Length(min=2, max=64), required=True)
+    email = ma.Email(validate=validate.Length(min=2, max=64),
+                     required=True)  # validate.Email?
+    password = ma.Str(validate=validate.Length(
+        min=8, max=64), required=True, load_only=True)
+
+    @post_load
+    def username_exists(self, data, **kwargs):
+        if Users.query.filter(Users.username == data['username']).first() is not None:
+            raise ValidationError(
+                "This username is already in use, please use a different username.")
+        return data
+
+    @post_load
+    def email_exists(self, data, **kwargs):
+        if Users.query.filter(Users.email == data['email']).first() is not None:
+            raise ValidationError(
+                "This email address is already in use, please use a different email address.")
 
 
 class CompaniesValidationSchema(ma.SQLAlchemySchema):
