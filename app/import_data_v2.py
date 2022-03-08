@@ -1,7 +1,6 @@
 import json
 from app import db
 from app.models import Companies, Cities, Meta, companies_meta
-
 '''
 Run within Flask Shell
 Run the following commands in the Flask Shell:
@@ -26,6 +25,33 @@ def insert_meta(meta_list, type, company_id):
                 print(
                     f"Company ID ({company_id}) has duplicate meta ({meta_id})")
     return
+  
+  
+def insert_city(dict):
+    '''
+
+    '''
+    # Query if city is already in DB
+    query = Cities.query.filter_by(city_name=dict['city_name'].title()).first()
+    result = {}
+
+    if query is not None:
+        result['city_id'] = query.city_id
+    else:
+        regions = ['Remote', 'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg',
+                   'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zuid-Holland', 'Zeeland']
+        if 'region' not in dict or dict['region'] not in regions:
+            dict['region'] = 'Remote'
+
+        new_city = Cities(
+            city_name=dict['city_name'].title(), region=dict['region'])
+
+        db.session.add(new_city)
+        db.session.commit()
+        result['city_id'] = new_city.city_id
+        result['region'] = new_city.region
+
+    return result
 
 
 def import_data(import_file):
