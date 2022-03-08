@@ -183,16 +183,17 @@ class NewAdminSchema(ma.SQLAlchemySchema):
 
     @post_load
     def username_exists(self, data, **kwargs):
-        if Users.query.filter(Users.username == data['username']).first() is not None:
+        if Users.query.filter(Users.username == data['username']).one_or_none():
             raise ValidationError(
                 "This username is already in use, please use a different username.")
         return data
 
     @post_load
     def email_exists(self, data, **kwargs):
-        if Users.query.filter(Users.email == data['email']).first() is not None:
+        if Users.query.filter(Users.email == data['email']).one_or_none():
             raise ValidationError(
                 "This email address is already in use, please use a different email address.")
+        return data
 
 
 class CompaniesValidationSchema(ma.SQLAlchemySchema):
