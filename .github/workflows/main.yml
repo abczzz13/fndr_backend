@@ -57,5 +57,6 @@ jobs:
           REDIS_URL: ${{ secrets.REDIS_URL }}
           CACHE_DEFAULT_TIMEOUT: ${{ secrets.CACHE_DEFAULT_TIMEOUT }}
           CACHE_REDIS_PASSWORD: ${{ secrets.CACHE_REDIS_PASSWORD }}
+          JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
           
 
