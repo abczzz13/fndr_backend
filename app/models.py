@@ -93,7 +93,8 @@ class Companies(PaginationAPIMixin, db.Model):
                             lazy='joined', backref=db.backref('meta', lazy='subquery'))
 
     def __repr__(self):
-        return '<Company ID: {}>'.format(self.company_id)
+        # '<Company ID: {}>'.format(self.company_id)
+        return f'<Company {self.company_id}: {self.company_name}>'
 
     def city_name(self):
         self.city_name = self.city.city_name
@@ -130,9 +131,12 @@ class Cities(db.Model):
     city_id = db.Column(db.Integer, primary_key=True)
     city_name = db.Column(db.String(64), unique=True, nullable=False)
     region = db.Column(db.String(64))
+    city_lat = db.Column(db.Float(precision=7))
+    city_lng = db.Column(db.Float(precision=7))
 
     def __repr__(self):
-        return '<City ID: {}>'.format(self.city_id)
+        # '<City ID: {}>'.format(self.city_id)
+        return f'<City {self.city_id}: {self.city_name} ({self.region})>'
 
     def get_or_create(self, city, region):
         query = Cities.query.filter_by(city_name=city.title()).first()
@@ -154,7 +158,8 @@ class Meta(db.Model):
     meta_string = db.Column(db.String(120))
 
     def __repr__(self):
-        return '<Meta ID {}>'.format(self.meta_id)
+        # '<Meta ID {}>'.format(self.meta_id)
+        return f'<Meta {self.meta_id}: {self.meta_string} ({self.type})>'
 
     def get_or_create(self, meta_string, type):
         query = Meta.query.filter_by(

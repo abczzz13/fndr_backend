@@ -1,5 +1,4 @@
 import os
-import re
 from datetime import timedelta
 from dotenv import load_dotenv
 
@@ -76,6 +75,8 @@ class Config():
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
+
+    GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
 
 
 class DevelopmentConfig(Config):
