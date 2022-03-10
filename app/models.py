@@ -1,5 +1,5 @@
-from app import db, login, ma
 from datetime import datetime
+from app import db, login, ma
 from flask import url_for
 from flask_login import UserMixin
 from marshmallow import validate, ValidationError, pre_load, post_load
@@ -131,8 +131,8 @@ class Cities(db.Model):
     city_id = db.Column(db.Integer, primary_key=True)
     city_name = db.Column(db.String(64), unique=True, nullable=False)
     region = db.Column(db.String(64))
-    city_lat = db.Column(db.Float(precision=7))
-    city_lng = db.Column(db.Float(precision=7))
+    city_lat = db.Column(db.Float(precision=8))
+    city_lng = db.Column(db.Float(precision=8))
 
     def __repr__(self):
         # '<City ID: {}>'.format(self.city_id)
