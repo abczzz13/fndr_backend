@@ -35,3 +35,8 @@ def user(username):
 
     user = Users.query.filter_by(username=username).first_or_404()
     return render_template('user.html', title='User Profile', user=user, form=form)
+
+
+@bp.route('/upload')
+def upload():
+    return render_template('upload.html', title='Upload')

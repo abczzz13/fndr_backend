@@ -1,0 +1,13 @@
+{% extends "base.html" %} {% block content %}
+    <h1>Simple Flask AWS S3 Uploader</h1>
+
+        <form action="api/v1/upload" method="POST" enctype="multipart/form-data">
+
+            <label for="user_file">Upload Your File</label>
+            <br></br>
+            <input type="file" name="user_file">
+            <br></br>
+            <button type="submit">Upload</button>
+
+        </form>
+{% endblock %}
