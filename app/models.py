@@ -10,7 +10,7 @@ from marshmallow import validate, ValidationError, pre_load, post_load
 # Pagination mixin Class
 class PaginationAPIMixin(object):
     @staticmethod
-    def to_collection_dict(query, page, per_page, endpoint, **kwargs):
+    def to_collection_dict(query, page, per_page, endpoint, param_dict, **kwargs):
         resources = query.paginate(page, per_page, False)
         data = {
             # Making a dictionary of the query results
@@ -25,9 +25,9 @@ class PaginationAPIMixin(object):
             # Links to current/next/previous/ pages
             # TODO: Update urls to include query parameters
             '_links': {
-                'self': url_for(endpoint, page=page, per_page=per_page, **kwargs),
-                'next': url_for(endpoint, page=page + 1, per_page=per_page, **kwargs) if resources.has_next else None,
-                'previous': url_for(endpoint, page=page - 1, per_page=per_page, **kwargs) if resources.has_prev else None
+                'self': url_for(endpoint, **param_dict, page=page, per_page=per_page, **kwargs),
+                'next': url_for(endpoint, **param_dict, page=page + 1, per_page=per_page, **kwargs) if resources.has_next else None,
+                'previous': url_for(endpoint, **param_dict, page=page - 1, per_page=per_page, **kwargs) if resources.has_prev else None
             }
         }
         return data
@@ -169,7 +169,7 @@ class Meta(db.Model):
             setattr(self, 'meta_id', query.meta_id)
         return self.meta_id
 
-    
+
 class NewAdminSchema(ma.SQLAlchemySchema):
     class Meta:
         model = Users

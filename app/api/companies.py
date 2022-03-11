@@ -1,11 +1,15 @@
+import os
 from app import db, cache
 from app.api import bp
 from app.api.errors import bad_request, error_response
 from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesValidationSchema, CompaniesPatchSchema, NewAdminSchema
 from app.import_data_v2 import insert_meta, insert_city
+from app.upload import upload_file_to_s3, validate_image
+from config import Config
 from flask import jsonify, request, url_for
 from flask_jwt_extended import create_access_token, jwt_required
 from marshmallow import ValidationError
+from werkzeug.utils import secure_filename
 
 
 # TODO: Looking into errors, validation and bad requests
@@ -94,11 +98,9 @@ def get_companies():
     param_dict = request.args.to_dict()
 
     # Variables
-    page = 1
-    per_page = 15
-    parameters = ['company', 'company_like', 'city', 'city_id', 'city_like', 'region',
-                  'size', 'year', 'tag', 'branch', 'discipline', 'page', 'per_page', 'filter_by']
     query = Companies.query.join(Cities)
+    parameters = ['company', 'company_like', 'city', 'city_id', 'city_like', 'region',
+                  'size', 'year', 'tag', 'branch', 'discipline', 'filter_by', 'page', 'per_page']
 
     # Iterate through all the parameters and adjust the query based on the parameters
     for parameter in param_dict:
@@ -139,16 +141,20 @@ def get_companies():
             # query = query.order_by(....asc())
             # TODO: implement order by
             pass
-        if parameter == 'page':
-            page = int(param_dict[parameter])
-        if parameter == 'per_page':
-            per_page = int(param_dict[parameter])
 
-    # Add pagination
+    # Default values for pagination
+    page = 1
+    per_page = 15
+
+    # Extract user specified pagination
+    if 'page' in param_dict:
+        page = int(param_dict.pop('page'))
+    if 'per_page' in param_dict:
+        per_page = int(param_dict.pop('per_page'))
+
+    # Create dictionary output, including pagination and meta info
     companies = Companies.to_collection_dict(
-        query.order_by(Companies.company_id.asc()), page, per_page, 'api.get_companies')
-    # TODO:Still need to fix the links in the to_collection_dict method
-    # Probably have to use the **kwargs to ...
+        query.order_by(Companies.company_id.asc()), page, per_page, 'api.get_companies', param_dict)
 
     return jsonify(companies)
 
@@ -178,7 +184,6 @@ def add_company():
 
     db.session.add(new_company)
     db.session.commit()
-
 
     # Insert Meta Data:
     insert_meta(validated_data['disciplines'],
@@ -254,3 +259,34 @@ def delete_company(id):
 
     cache.clear()
     return response
+
+
+@bp.route('/v1/upload', methods=['POST'])
+@jwt_required()
+def upload_file():
+
+    if 'file' not in request.files:
+        return error_response(400, "No file key in request.files")
+
+    img = request.files['file']
+    if img.filename == "":
+        return error_response(400, "Please select a file")
+
+    filename = secure_filename(img.filename)
+    file_ext = os.path.splitext(filename)[1]
+
+    if file_ext not in Config.UPLOAD_EXTENSIONS or file_ext != validate_image(img.stream):
+        return error_response(400, f"Invalid file extension, please use {Config.UPLOAD_EXTENSIONS} ")
+
+    output = upload_file_to_s3(img, Config.S3_BUCKET_NAME)
+
+    response = jsonify(str(output))
+    response.status_code = 201
+
+    return response
+
+    # TODO: We could also think about nameing the file ourselves...
+    # uploaded_file.save(os.path.join('static/avatars', current_user.get_id()))
+    # something like <company_id>_logo_<company_name>
+
+    # Additionally, it overrides files with the same name already in the bucket
