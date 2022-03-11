@@ -2,9 +2,8 @@ from app import db, login, ma
 from datetime import datetime
 from flask import url_for
 from flask_login import UserMixin
-from marshmallow import validate, ValidationError, post_load
-from werkzeug.security import generate_password_hash, check_password_hash
 from marshmallow import validate, ValidationError, pre_load, post_load
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # Pagination mixin Class
@@ -169,7 +168,7 @@ class Meta(db.Model):
             setattr(self, 'meta_id', query.meta_id)
         return self.meta_id
 
-    
+
 class NewAdminSchema(ma.SQLAlchemySchema):
     class Meta:
         model = Users
@@ -184,16 +183,17 @@ class NewAdminSchema(ma.SQLAlchemySchema):
 
     @post_load
     def username_exists(self, data, **kwargs):
-        if Users.query.filter(Users.username == data['username']).first() is not None:
+        if Users.query.filter(Users.username == data['username']).one_or_none():
             raise ValidationError(
                 "This username is already in use, please use a different username.")
         return data
 
     @post_load
     def email_exists(self, data, **kwargs):
-        if Users.query.filter(Users.email == data['email']).first() is not None:
+        if Users.query.filter(Users.email == data['email']).one_or_none():
             raise ValidationError(
                 "This email address is already in use, please use a different email address.")
+        return data
 
 
 class CompaniesValidationSchema(ma.SQLAlchemySchema):
