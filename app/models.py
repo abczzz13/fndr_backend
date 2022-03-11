@@ -134,10 +134,14 @@ class Cities(db.Model):
     def __repr__(self):
         return '<City ID: {}>'.format(self.city_id)
 
-    def get_or_create(self, city, region):
-        query = Cities.query.filter_by(city_name=city.title()).first()
+    def get_or_create(self, dict):
+        query = Cities.query.filter_by(
+            city_name=dict['city_name'].title()).first()
         if query is None:
-            new_city = Cities(city_name=city.title(), region=region)
+            if 'region' not in dict:
+                dict['region'] = 'Remote'
+            new_city = Cities(
+                city_name=dict['city_name'].title(), region=dict['region'])
             db.session.add(new_city)
             db.session.commit()
             setattr(self, 'city_id', new_city.city_id)
