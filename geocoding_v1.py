@@ -1,12 +1,13 @@
 """ This module provides functions to get the lat/lng for cities."""
 import json
+import os
 import time
 import urllib.error
 import urllib.parse
 import urllib.request
 from app import db, create_app
 from app.models import Cities
-from config import Config, DevelopmentConfig
+from config import Config
 
 
 # Declaring Variables
@@ -15,7 +16,7 @@ GOOGLE_API_KEY = Config.GOOGLE_API_KEY
 GEOLOCATE_BASE_URL = "https://maps.googleapis.com/maps/api/geocode/json"
 
 
-def get_coordinates(city):
+def get_coordinates(city: str):
     """ Get the lat/lng for a city from the Google Maps Geolocate API.
 
     Parameters:
@@ -32,6 +33,9 @@ def get_coordinates(city):
     print(url)
     current_delay = 0.1
     max_delay = 5
+
+    # Maybe look into using the request libary? As we have been doin with the testing
+    # https://www.nylas.com/blog/use-python-requests-module-rest-apis/
 
     while True:
         try:
@@ -58,7 +62,7 @@ def get_coordinates(city):
         current_delay *= 2
 
 
-def update_coordinates_db(city, coordinates):
+def update_coordinates_db(city: dict, coordinates: dict):
     """ Update the city record in the DB with the given coordinates.
 
     Parameters:
@@ -122,11 +126,8 @@ def main():
     Returns:
     """
     # Create app
-    app = create_app(config_class=DevelopmentConfig)
+    app = create_app(config_class=os.environ.get('APP_SETTINGS'))
     app.app_context().push()
-
-    # geolocate()
-    # geolocate_update()
 
 
 if __name__ == '__main__':
