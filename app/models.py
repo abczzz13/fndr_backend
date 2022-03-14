@@ -1,5 +1,6 @@
 from datetime import datetime
 from app import db, login, ma
+from geocoding_v1 import get_coordinates
 from flask import url_for
 from flask_login import UserMixin
 from marshmallow import validate, ValidationError, pre_load, post_load
@@ -141,7 +142,9 @@ class Cities(db.Model):
     def get_or_create(self, city, region):
         query = Cities.query.filter_by(city_name=city.title()).first()
         if query is None:
-            new_city = Cities(city_name=city.title(), region=region)
+            coordinates = get_coordinates(city)
+            new_city = Cities(city_name=city.title(), region=region,
+                              city_lat=coordinates['lat'], city_lng=coordinates['lng'])
             db.session.add(new_city)
             db.session.commit()
             setattr(self, 'city_id', new_city.city_id)
