@@ -73,3 +73,6 @@ To run this project locally, you will be need to following enviroment variables:
 -   Add a Google Maps feature
 -   File Upload for logos, using AWS S3
 -   Dockerize the project
+
+  
+# Credits:
