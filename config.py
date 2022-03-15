@@ -77,6 +77,8 @@ class Config():
     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
 
     GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
+    GEOLOCATE_COUNTRY = 'Nederland'
+    GEOLOCATE_BASE_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
 
 
 class DevelopmentConfig(Config):

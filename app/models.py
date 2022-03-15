@@ -1,6 +1,6 @@
 from datetime import datetime
 from app import db, login, ma
-from geocoding_v1 import get_coordinates
+from .utils import get_coordinates
 from flask import url_for
 from flask_login import UserMixin
 from marshmallow import validate, ValidationError, pre_load, post_load

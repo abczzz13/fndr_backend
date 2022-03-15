@@ -1,5 +1,6 @@
 from app.models import Cities
-from geocoding_v1 import get_coordinates, update_coordinates_db
+from app.utils import get_coordinates
+from geocoding_v1 import update_coordinates_db
 
 
 def test_get_coordinates(client, insert_data_db):
