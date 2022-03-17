@@ -49,6 +49,31 @@ def test_post_valid_company(client, get_token):
     assert result['year'] == 1969
 
 
+def test_post_valid_company_optional_fields(client, get_token):
+    '''
+    GIVEN a Flask application configured for testing
+    WHEN a POST request is made to /api/v1/companies with a valid company missing some optional fields
+    THEN check that the response is valid and particular data can be found
+    '''
+    data = {
+        "city_name": "Hoorn",
+        "company_name": "Test company #777",
+        "company_size": "GT-100",
+        "website": "https://testdetest.nl"
+    }
+
+    response = client.post('/api/v1/companies', data=json.dumps(data),
+                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    result = json.loads(response.get_data(as_text=True))
+
+    assert response.status_code == 201
+    assert result['company_id'] == 2
+    assert result['company_name'] == 'Test company #777'
+    assert result['city_name'] == 'Hoorn'
+    assert result['company_size'] == 'GT-100'
+    assert result['website'] == 'https://testdetest.nl'
+
+
 def test_post_invalid_company_id(client, insert_data_db, get_token):
     '''
     GIVEN a Flask application configured for testing
