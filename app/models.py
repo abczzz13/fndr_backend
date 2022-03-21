@@ -139,17 +139,25 @@ class Cities(db.Model):
         # '<City ID: {}>'.format(self.city_id)
         return f'<City {self.city_id}: {self.city_name} ({self.region})>'
 
-    def get_or_create(self, city, region):
-        query = Cities.query.filter_by(city_name=city.title()).first()
+    def get_or_create(self, dict):
+        query = Cities.query.filter_by(
+            city_name=dict['city_name'].title()).first()
         if query is None:
+            if 'region' not in dict:
+                dict['region'] = 'Remote'
+                
             coordinates = get_coordinates(city)
             new_city = Cities(city_name=city.title(), region=region,
                               city_lat=coordinates['lat'], city_lng=coordinates['lng'])
+            
             db.session.add(new_city)
             db.session.commit()
+            
             setattr(self, 'city_id', new_city.city_id)
+            
         else:
             setattr(self, 'city_id', query.city_id)
+            
         return self.city_id
 
 
