@@ -275,7 +275,7 @@ def upload_file():
     file_ext = os.path.splitext(filename)[1]
 
     if file_ext not in Config.UPLOAD_EXTENSIONS or file_ext != validate_image(img.stream):
-        return error_response(400, f"Invalid file extension, please use {Config.UPLOAD_EXTENSIONS} ")
+        return error_response(400, f"Invalid file extension, please use {Config.UPLOAD_EXTENSIONS}")
 
     output = {}
     output['url'] = str(upload_file_to_s3(img, Config.S3_BUCKET_NAME))
