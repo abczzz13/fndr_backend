@@ -82,3 +82,24 @@ def test_patch_invalid_company_fields(client, get_token):
 
     assert result['message']['region'][0] == "Unknown field."
     assert result['message']['company_id'][0] == "Unknown field."
+
+
+def test_patch_company_name_unchanged(client, get_token):
+    '''
+    GIVEN a Flask application configured for testing
+    WHEN a PATCH request is made to /api/v1/companies/2 with an unchanged company_name field and valid other field
+    THEN check that the response is valid and specific data can be found
+    '''
+    data = {
+        "company_name": "Test company #1000",
+        "year": 2000
+    }
+
+    response = client.patch('/api/v1/companies/1', data=json.dumps(data),
+                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    result = json.loads(response.get_data(as_text=True))
+
+    assert response.status_code == 200
+    assert result['company_id'] == 1
+    assert result['company_name'] == 'Test company #1000'
+    assert result['year'] == 2000
