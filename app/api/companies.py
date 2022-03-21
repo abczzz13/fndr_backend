@@ -264,7 +264,6 @@ def delete_company(id):
 @bp.route('/v1/upload', methods=['POST'])
 @jwt_required()
 def upload_file():
-
     if 'file' not in request.files:
         return error_response(400, "No file key in request.files")
 
@@ -278,9 +277,10 @@ def upload_file():
     if file_ext not in Config.UPLOAD_EXTENSIONS or file_ext != validate_image(img.stream):
         return error_response(400, f"Invalid file extension, please use {Config.UPLOAD_EXTENSIONS} ")
 
-    output = upload_file_to_s3(img, Config.S3_BUCKET_NAME)
+    output = {}
+    output['url'] = str(upload_file_to_s3(img, Config.S3_BUCKET_NAME))
 
-    response = jsonify(str(output))
+    response = jsonify(output)
     response.status_code = 201
 
     return response
