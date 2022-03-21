@@ -6,7 +6,9 @@ And Miquel Grinberg (https://blog.miguelgrinberg.com/post/handling-file-uploads-
 import boto3
 import imghdr
 from config import Config
+from flask import jsonify
 
+# s3 = boto3.client('s3')
 s3 = boto3.client('s3', aws_access_key_id=Config.AWS_ACCESS_KEY,
                   aws_secret_access_key=Config.AWS_ACCESS_SECRET)
 
@@ -43,8 +45,7 @@ def upload_file_to_s3(file, bucket_name, acl='public-read'):
     """
 
     try:
-        s3.upload_fileobj(file, bucket_name, file.filename, ExtraArgs={
-                          'ACL': acl, 'ContentType': file.content_type})
+        s3.generate_presigned_post(bucket_name, file.filename, ExpiresIn=3600)
 
     except Exception as e:
         print("Something happened: ", e)
