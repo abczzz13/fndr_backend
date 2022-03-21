@@ -145,19 +145,19 @@ class Cities(db.Model):
         if query is None:
             if 'region' not in dict:
                 dict['region'] = 'Remote'
-                
-            coordinates = get_coordinates(city)
-            new_city = Cities(city_name=city.title(), region=region,
+
+            coordinates = get_coordinates(dict['city_name'])
+            new_city = Cities(city_name=dict['city_name'].title(), region=dict['region'],
                               city_lat=coordinates['lat'], city_lng=coordinates['lng'])
-            
+
             db.session.add(new_city)
             db.session.commit()
-            
+
             setattr(self, 'city_id', new_city.city_id)
-            
+
         else:
             setattr(self, 'city_id', query.city_id)
-            
+
         return self.city_id
 
 
