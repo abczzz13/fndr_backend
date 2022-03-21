@@ -1,6 +1,6 @@
 
 import os
-from app import db, cache
+from app import db, cache, jwt
 from app.api import bp
 from app.api.errors import bad_request, error_response
 from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesValidationSchema, CompaniesPatchSchema, NewAdminSchema
