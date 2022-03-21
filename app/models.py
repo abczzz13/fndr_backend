@@ -1,10 +1,10 @@
-from app import db, login, ma
 from datetime import datetime
+from app import db, login, ma
+from .utils import get_coordinates
 from flask import url_for
 from flask_login import UserMixin
-from marshmallow import validate, ValidationError, post_load
-from werkzeug.security import generate_password_hash, check_password_hash
 from marshmallow import validate, ValidationError, pre_load, post_load
+from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # Pagination mixin Class
@@ -94,7 +94,8 @@ class Companies(PaginationAPIMixin, db.Model):
                             lazy='joined', backref=db.backref('meta', lazy='subquery'))
 
     def __repr__(self):
-        return '<Company ID: {}>'.format(self.company_id)
+        # '<Company ID: {}>'.format(self.company_id)
+        return f'<Company {self.company_id}: {self.company_name}>'
 
     def city_name(self):
         self.city_name = self.city.city_name
@@ -131,19 +132,32 @@ class Cities(db.Model):
     city_id = db.Column(db.Integer, primary_key=True)
     city_name = db.Column(db.String(64), unique=True, nullable=False)
     region = db.Column(db.String(64))
+    city_lat = db.Column(db.Float(precision=8))
+    city_lng = db.Column(db.Float(precision=8))
 
     def __repr__(self):
-        return '<City ID: {}>'.format(self.city_id)
+        # '<City ID: {}>'.format(self.city_id)
+        return f'<City {self.city_id}: {self.city_name} ({self.region})>'
 
-    def get_or_create(self, city, region):
-        query = Cities.query.filter_by(city_name=city.title()).first()
+    def get_or_create(self, dict):
+        query = Cities.query.filter_by(
+            city_name=dict['city_name'].title()).first()
         if query is None:
-            new_city = Cities(city_name=city.title(), region=region)
+            if 'region' not in dict:
+                dict['region'] = 'Remote'
+
+            coordinates = get_coordinates(dict['city_name'])
+            new_city = Cities(city_name=dict['city_name'].title(), region=dict['region'],
+                              city_lat=coordinates['lat'], city_lng=coordinates['lng'])
+
             db.session.add(new_city)
             db.session.commit()
+
             setattr(self, 'city_id', new_city.city_id)
+
         else:
             setattr(self, 'city_id', query.city_id)
+
         return self.city_id
 
 
@@ -155,7 +169,8 @@ class Meta(db.Model):
     meta_string = db.Column(db.String(120))
 
     def __repr__(self):
-        return '<Meta ID {}>'.format(self.meta_id)
+        # '<Meta ID {}>'.format(self.meta_id)
+        return f'<Meta {self.meta_id}: {self.meta_string} ({self.type})>'
 
     def get_or_create(self, meta_string, type):
         query = Meta.query.filter_by(
@@ -184,16 +199,17 @@ class NewAdminSchema(ma.SQLAlchemySchema):
 
     @post_load
     def username_exists(self, data, **kwargs):
-        if Users.query.filter(Users.username == data['username']).first() is not None:
+        if Users.query.filter(Users.username == data['username']).one_or_none():
             raise ValidationError(
                 "This username is already in use, please use a different username.")
         return data
 
     @post_load
     def email_exists(self, data, **kwargs):
-        if Users.query.filter(Users.email == data['email']).first() is not None:
+        if Users.query.filter(Users.email == data['email']).one_or_none():
             raise ValidationError(
                 "This email address is already in use, please use a different email address.")
+        return data
 
 
 class CompaniesValidationSchema(ma.SQLAlchemySchema):

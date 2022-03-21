@@ -1,5 +1,4 @@
 import os
-import re
 from datetime import timedelta
 from dotenv import load_dotenv
 
@@ -84,6 +83,10 @@ class Config():
     AWS_ACCESS_SECRET = os.environ.get('AWS_ACCESS_KEY')
     S3_LOCATION = 'https://{}.s3.amazonaws.com/'.format(S3_BUCKET_NAME)
 
+    GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
+    GEOLOCATE_COUNTRY = 'Nederland'
+    GEOLOCATE_BASE_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
+    
 
 class DevelopmentConfig(Config):
     DEBUG = True

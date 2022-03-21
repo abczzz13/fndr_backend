@@ -25,8 +25,8 @@ def insert_meta(meta_list, type, company_id):
                 print(
                     f"Company ID ({company_id}) has duplicate meta ({meta_id})")
     return
-  
-  
+
+
 def insert_city(dict):
     '''
 

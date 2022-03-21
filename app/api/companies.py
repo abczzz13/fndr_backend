@@ -1,3 +1,4 @@
+
 import os
 from app import db, cache
 from app.api import bp
@@ -7,12 +8,23 @@ from app.import_data_v2 import insert_meta, insert_city
 from app.upload import upload_file_to_s3, validate_image
 from config import Config
 from flask import jsonify, request, url_for
-from flask_jwt_extended import create_access_token, jwt_required
+from flask_jwt_extended import create_access_token, jwt_required, current_user
 from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
 
 
 # TODO: Looking into errors, validation and bad requests
+
+
+@jwt.user_identity_loader
+def user_identity_lookup(user):
+    return user.id
+
+
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    identity = jwt_data["sub"]
+    return Users.query.filter_by(id=identity).one_or_none()
 
 
 @bp.route('/v1/token', methods=['POST'])
@@ -22,13 +34,13 @@ def create_token():
     password = request.json.get('password', None)
 
     # Lookup user from DB and check credentials, return error if not valid
-    user = Users.query.filter_by(username=username).first()
-    if user is None or not user.check_password(password):
+    user = Users.query.filter_by(username=username).one_or_none()
+    if not user or not user.check_password(password):
         return error_response(401, "Invalid user credentials")
 
     # Create and return token if credentials are valid
-    access_token = create_access_token(identity=user.id)
-    return jsonify({'token': access_token, 'user_id': user.id})
+    access_token = create_access_token(identity=user)
+    return jsonify({'token': access_token, 'user_id': user.id, 'username': user.username})
 
 
 @bp.route('v1/token', methods=['DELETE'])
@@ -36,6 +48,16 @@ def create_token():
 def revoke_token():
     # TODO: Revoke token
     pass
+
+
+@bp.route("v1/check_token", methods=["GET"])
+@jwt_required()
+def check_token():
+
+    return jsonify(
+        id=current_user.id,
+        username=current_user.username,
+    )
 
 
 @bp.route('v1/register', methods=['POST'])
@@ -176,20 +198,24 @@ def add_company():
 
     # Check if city is already in DB:
     city = Cities()
-    city_id = city.get_or_create(
-        validated_data['city_name'], validated_data['region'])
+    validated_data['city_id'] = city.get_or_create(validated_data)
 
-    new_company = Companies(company_name=validated_data['company_name'], logo_image_src=validated_data['logo_image_src'],
-                            website=validated_data['website'], year=validated_data['year'], company_size=validated_data['company_size'], city_id=city_id)
+    # Create new company
+    new_company = Companies()
+    fields = ['company_name', 'logo_image_src',
+              'website', 'year', 'company_size', 'city_id']
+    for field in fields:
+        if field in validated_data:
+            setattr(new_company, field, validated_data[field])
 
     db.session.add(new_company)
     db.session.commit()
 
     # Insert Meta Data:
-    insert_meta(validated_data['disciplines'],
-                'disciplines', new_company.company_id)
-    insert_meta(validated_data['branches'], 'branches', new_company.company_id)
-    insert_meta(validated_data['tags'], 'tags', new_company.company_id)
+    meta = ['disciplines', 'branches', 'tags']
+    for field in meta:
+        if field in validated_data:
+            insert_meta(validated_data[field], field, new_company.company_id)
 
     # Create response
     response = jsonify(new_company.to_dict())
