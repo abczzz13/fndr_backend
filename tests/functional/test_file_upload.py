@@ -71,7 +71,7 @@ def test_upload_txt_file(client, get_token):
     result = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 400
-    assert result['message'] == "Invalid file extension, please use {'.gif', '.jpg', '.png'}"
+    assert result['message'] == "Invalid file extension, please use .gif, .jpg or .png"
 
 
 def test_upload_fake_image(client, get_token):
@@ -89,4 +89,4 @@ def test_upload_fake_image(client, get_token):
     result = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 400
-    assert result['message'] == "Invalid file extension, please use {'.gif', '.jpg', '.png'}"
+    assert result['message'] == "Invalid file extension, please use .gif, .jpg or .png"
