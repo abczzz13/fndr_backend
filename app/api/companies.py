@@ -5,7 +5,7 @@ from app.api import bp
 from app.api.errors import bad_request, error_response
 from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesValidationSchema, CompaniesPatchSchema, NewAdminSchema
 from app.import_data_v2 import insert_meta, insert_city
-from app.upload import upload_file_to_s3, validate_image
+from app.utils import upload_file_to_s3, validate_image
 from config import Config
 from flask import jsonify, request, url_for
 from flask_jwt_extended import create_access_token, jwt_required, current_user
