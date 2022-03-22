@@ -44,7 +44,7 @@ class Users(UserMixin, db.Model):
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
-        return '<User {}'.format(self.username)
+        return f'<User {self.id}: {self.username} ({self.email})>'
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -246,9 +246,7 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
 
     @post_load
     def company_name_exists(self, data, **kwargs):
-        company = Companies.query.filter_by(
-            company_name=data['company_name'].title()).first()
-        if company is not None:
+        if Companies.query.filter(Companies.company_name == data['company_name'].title()).one_or_none():
             raise ValidationError(
                 "A company already exists with this company_name. Please use the PATCH method if you would like to modify this company or use a different company_name if you would like to add a different company.")
         return data
@@ -278,6 +276,7 @@ class CompaniesPatchSchema(ma.SQLAlchemySchema):
         ma.Str(validate=validate.Length(min=2, max=120)))
     branches = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
     tags = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
+    id_for_check_company = ma.Int()
 
     # Additional Validation check
     @post_load
@@ -285,7 +284,7 @@ class CompaniesPatchSchema(ma.SQLAlchemySchema):
         if 'company_name' in data:
             company = Companies.query.filter_by(
                 company_name=data['company_name'].title()).first()
-            if company is not None:
+            if company is not None and company.company_id != data['id_for_check_company']:
                 raise ValidationError(
                     "A company already exists with this company_name. Please use a different company_name.")
             return data
