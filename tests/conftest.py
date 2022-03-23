@@ -3,7 +3,6 @@ from app.import_data_v2 import import_data
 from app.models import Users
 from config import TestConfig
 from flask import json
-from flask_login import login_user
 import pytest
 
 
@@ -61,7 +60,7 @@ def get_token(client, init_testdb, new_user):
         "password": "testtest"
     }
 
-    response = client.post("/api/v1/token", data=json.dumps(data),
+    response = client.post("/auth/token", data=json.dumps(data),
                            headers={"Content-Type": "application/json"},)
 
     result = json.loads(response.get_data(as_text=True))
@@ -69,18 +68,3 @@ def get_token(client, init_testdb, new_user):
     token = result['token']
 
     return token
-
-
-@pytest.fixture(scope='module')
-def login_users(client, init_testdb, new_user):
-
-    with client.test_request_context():
-
-        username = 'Test User'
-        password = 'testtest'
-
-        user = Users.query.filter_by(username=username).first()
-
-        if user is not None and user.check_password(password):
-
-            yield login_user(new_user, remember=False)

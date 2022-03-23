@@ -5,7 +5,6 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
-from flask_login import LoginManager
 from flask_jwt_extended import JWTManager
 from flask_caching import Cache
 from flask_cors import CORS
@@ -17,10 +16,7 @@ db = SQLAlchemy()
 ma = Marshmallow()
 migrate = Migrate()
 jwt = JWTManager()
-login = LoginManager()
 cache = Cache()
-login.login_view = 'auth.login'
-login.login_message = ("Please log in to access this page.")
 cors = CORS()
 
 
@@ -35,7 +31,6 @@ def create_app(config_class=Config):
     db.init_app(app)
     ma.init_app(app)
     migrate.init_app(app, db)
-    login.init_app(app)
     jwt.init_app(app)
     cache.init_app(app)
     cors.init_app(app)
@@ -49,9 +44,6 @@ def create_app(config_class=Config):
 
     from app.errors import bp as errors_bp
     app.register_blueprint(errors_bp)
-
-    from app.main import bp as main_bp
-    app.register_blueprint(main_bp)
 
     # Logging to file:
     if not app.debug and not app.testing:

@@ -5,7 +5,7 @@ from flask import json
 def test_post_valid_user(client, get_token):
     '''
     GIVEN a Flask application configured for testing
-    WHEN a POST request is made to /api/v1/register with a valid user
+    WHEN a POST request is made to /auth/register with a valid user
     THEN check that the response is valid and particular data can be found
     '''
     data = {
@@ -14,7 +14,7 @@ def test_post_valid_user(client, get_token):
         "password": "abcdefgh"
     }
 
-    response = client.post('/api/v1/register', data=json.dumps(data),
+    response = client.post('/auth/register', data=json.dumps(data),
                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
 
     result = json.loads(response.get_data(as_text=True))
@@ -31,7 +31,7 @@ def test_post_valid_user(client, get_token):
 def test_post_invalid_username(client, get_token):
     '''
     GIVEN a Flask application configured for testing
-    WHEN a POST request is made to /api/v1/register with an already existing username
+    WHEN a POST request is made to /auth/register with an already existing username
     THEN check that the response is invalid and particular error messages can be found
     '''
     data = {
@@ -40,7 +40,7 @@ def test_post_invalid_username(client, get_token):
         "password": "abcdefgh"
     }
 
-    response = client.post('/api/v1/register', data=json.dumps(data),
+    response = client.post('/auth/register', data=json.dumps(data),
                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
 
     result = json.loads(response.get_data(as_text=True))
@@ -51,7 +51,7 @@ def test_post_invalid_username(client, get_token):
 def test_post_invalid_email(client, get_token):
     '''
     GIVEN a Flask application configured for testing
-    WHEN a POST request is made to /api/v1/register with an already existing email address
+    WHEN a POST request is made to /auth/register with an already existing email address
     THEN check that the response is invalid and particular error messages can be found
     '''
     data = {
@@ -60,7 +60,7 @@ def test_post_invalid_email(client, get_token):
         "password": "abcdefgh"
     }
 
-    response = client.post('/api/v1/register', data=json.dumps(data),
+    response = client.post('/auth/register', data=json.dumps(data),
                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
 
     result = json.loads(response.get_data(as_text=True))
@@ -71,7 +71,7 @@ def test_post_invalid_email(client, get_token):
 def test_post_invalid_user(client, get_token):
     '''
     GIVEN a Flask application configured for testing
-    WHEN a POST request is made to /api/v1/register with a invalid user
+    WHEN a POST request is made to /auth/register with a invalid user
     THEN check that the response is invalid and particular error messages can be found
     '''
     data1 = {
@@ -82,9 +82,9 @@ def test_post_invalid_user(client, get_token):
         "password": "abcd"
     }
 
-    response1 = client.post('/api/v1/register', data=json.dumps(data1),
+    response1 = client.post('/auth/register', data=json.dumps(data1),
                             headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
-    response2 = client.post('/api/v1/register', data=json.dumps(data2),
+    response2 = client.post('/auth/register', data=json.dumps(data2),
                             headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
 
     result1 = json.loads(response1.get_data(as_text=True))

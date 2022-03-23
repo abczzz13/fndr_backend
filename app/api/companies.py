@@ -1,117 +1,27 @@
-from app import db, cache, jwt
+"""
+This module provides all the endpoints for companies API:
+
+GET     /v1/companies       Returns all companies, multiple query parameters can be used
+POST    /v1/companies       Creates a new company
+GET     /v1/companies/:id   Returns company with specific company_id
+PATCH   /v1/companies/:id   Updates company with specific company_id
+DELETE  /v1/companies/:id   Deletes company with specific company_id        
+
+"""
+from app import db, cache
 from app.api import bp
-from app.api.errors import bad_request, error_response
-from app.models import Companies, Cities, Meta, companies_meta, Users, CompaniesValidationSchema, CompaniesPatchSchema, NewAdminSchema
+from app.errors.handlers import bad_request, error_response
+from app.models import Companies, Cities, Meta, companies_meta, CompaniesValidationSchema, CompaniesPatchSchema
 from app.import_data_v2 import insert_meta, insert_city
 from flask import jsonify, request, url_for
-from flask_jwt_extended import create_access_token, jwt_required, current_user
+from flask_jwt_extended import jwt_required
 from marshmallow import ValidationError
 
 
-# TODO: Looking into errors, validation and bad requests
-
-
-@jwt.user_identity_loader
-def user_identity_lookup(user):
-    return user.id
-
-
-@jwt.user_lookup_loader
-def user_lookup_callback(_jwt_header, jwt_data):
-    identity = jwt_data["sub"]
-    return Users.query.filter_by(id=identity).one_or_none()
-
-
-@bp.route('/v1/token', methods=['POST'])
-def create_token():
-    # Get User credentials from POST
-    username = request.json.get('username', None)
-    password = request.json.get('password', None)
-
-    # Lookup user from DB and check credentials, return error if not valid
-    user = Users.query.filter_by(username=username).one_or_none()
-    if not user or not user.check_password(password):
-        return error_response(401, "Invalid user credentials")
-
-    # Create and return token if credentials are valid
-    access_token = create_access_token(identity=user)
-    return jsonify({'token': access_token, 'user_id': user.id, 'username': user.username})
-
-
-@bp.route('v1/token', methods=['DELETE'])
-@jwt_required()
-def revoke_token():
-    # TODO: Revoke token
-    pass
-
-
-@bp.route("v1/check_token", methods=["GET"])
-@jwt_required()
-def check_token():
-
-    return jsonify(
-        id=current_user.id,
-        username=current_user.username,
-    )
-
-
-@bp.route('v1/register', methods=['POST'])
-@jwt_required()
-def register_admin():
-    data = request.get_json() or {}
-
-    try:
-        validated_data = NewAdminSchema().load(data)
-    except ValidationError as err:
-        return bad_request(err.messages)
-
-    new_admin = Users(
-        username=validated_data['username'], email=validated_data['email'])
-    new_admin.set_password(validated_data['password'])
-
-    db.session.add(new_admin)
-    db.session.commit()
-
-    response = jsonify(new_admin.to_dict())
-    response.status_code = 201
-
-    return response
-
-
-@bp.route('/v1/cities')
-def get_cities():
-
-    # Get the parameters from request
-    param_dict = request.args.to_dict()
-
-    # Check if city_like parameter is in GET request
-    if 'city_like' in param_dict:
-        city_like = '%' + param_dict['city_like'] + '%'
-
-        # Raw SQL query to get a selection of cities which fit the city_like parameter
-        query = db.session.execute(
-            "SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id WHERE lower(cities.city_name) LIKE lower(:city_like) GROUP BY companies.city_id, cities.city_name ORDER BY city_count DESC", {"city_like": city_like})
-    else:
-        # Raw SQL query to get all cities with company count
-        query = db.session.execute(
-            "SELECT cities.city_name, COUNT(cities.city_id) AS city_count FROM COMPANIES JOIN CITIES ON companies.city_id=cities.city_id GROUP BY companies.city_id, cities.city_name ORDER BY city_count DESC")
-
-    # Put the query results in a sorted list
-    sorted_list = list((x, y) for x, y in query.fetchall())
-
-    return jsonify(sorted_list)
-
-
-@ bp.route('/v1/companies/all', methods=['GET'])
-def get_companies_all():
-    all_companies = Companies.query.order_by(Companies.company_id.asc()).all()
-    return jsonify([company.to_dict() for company in all_companies])
-
-
-@ bp.route('/v1/companies', methods=['GET'])
-@ cache.cached(timeout=30, query_string=True)
+@bp.route('/v1/companies', methods=['GET'])
+@cache.cached(timeout=30, query_string=True)
 def get_companies():
-    # Get the parameters from request
+    """GET     /v1/companies       Returns all companies, multiple query parameters can be used"""
     param_dict = request.args.to_dict()
 
     # Variables
@@ -167,23 +77,19 @@ def get_companies():
 
     # Add pagination
     companies = Companies.to_collection_dict(
-        query.order_by(Companies.company_id.asc()), page, per_page, 'api.get_companies')
-    # TODO:Still need to fix the links in the to_collection_dict method
-    # Probably have to use the **kwargs to ...
+        query.order_by(Companies.company_id.asc()),
+        page, per_page, 'api.get_companies')
 
     return jsonify(companies)
-
-
-@bp.route('/v1/companies/<int:id>', methods=['GET'])
-def get_company(id):
-    return jsonify(Companies.query.get_or_404(id).to_dict())
 
 
 @bp.route('/v1/companies', methods=['POST'])
 @jwt_required()
 def add_company():
+    """POST    /v1/companies       Creates a new company"""
     data = request.get_json() or {}
 
+    # Validate input
     try:
         validated_data = CompaniesValidationSchema().load(data)
     except ValidationError as err:
@@ -220,19 +126,29 @@ def add_company():
     return response
 
 
+@bp.route('/v1/companies/<int:id>', methods=['GET'])
+@cache.cached(timeout=30, query_string=True)
+def get_company(id):
+    """GET     /v1/companies/:id   Returns company with specific company_id"""
+    return jsonify(Companies.query.get_or_404(id).to_dict())
+
+
 @bp.route('/v1/companies/<int:id>', methods=['PATCH'])
 @jwt_required()
 def update_company(id):
+    """PATCH   /v1/companies/:id   Updates company with specific company_id"""
     company = Companies.query.get_or_404(id)
 
     data = request.get_json() or {}
     data['id_for_check_company'] = company.company_id
 
+    # Validate input
     try:
         validated_data = CompaniesPatchSchema().load(data, partial=True)
     except ValidationError as err:
         return bad_request(err.messages)
 
+    # Make the update in the DB for city and meta infor
     fields_in_related_tables = ['city_name', 'disciplines', 'branches', 'tags']
     for field in fields_in_related_tables:
         if field in validated_data:
@@ -250,7 +166,7 @@ def update_company(id):
                 insert_meta(validated_data[field], field, id)
                 validated_data.pop(field)
 
-    # Make the update in the DB
+    # Make the update in the DB for the other fields
     for field in validated_data:
         setattr(company, field, validated_data[field])
     db.session.commit()
@@ -267,13 +183,15 @@ def update_company(id):
 @bp.route('/v1/companies/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_company(id):
+    """DELETE  /v1/companies/:id   Deletes company with specific company_id"""
+    # Lookup company_id and delete if exists
     company = Companies.query.get_or_404(id)
     db.session.delete(company)
     db.session.commit()
 
+    # Create response
     message = {}
     message['message'] = f"Company with company_id={id} has been deleted"
-
     response = jsonify(message)
     response.status_code = 200
 

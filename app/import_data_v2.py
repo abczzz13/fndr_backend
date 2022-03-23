@@ -1,6 +1,6 @@
 import json
 from app import db
-from app.models import Companies, Cities, Meta, companies_meta
+from app.models import Companies, Cities, Meta
 '''
 Run within Flask Shell
 Run the following commands in the Flask Shell:

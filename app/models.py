@@ -1,8 +1,7 @@
 from datetime import datetime
-from app import db, login, ma
+from app import db, ma, jwt
 from .utils import get_coordinates
 from flask import url_for
-from flask_login import UserMixin
 from marshmallow import validate, ValidationError, pre_load, post_load
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -33,7 +32,7 @@ class PaginationAPIMixin(object):
         return data
 
 
-class Users(UserMixin, db.Model):
+class Users(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -53,19 +52,23 @@ class Users(UserMixin, db.Model):
         return check_password_hash(self.password_hash, password)
 
     def to_dict(self):
-
         data = {
             'id': self.id,
             'username': self.username,
             'email': self.email
         }
-
         return data
 
 
-@login.user_loader
-def load_user(id):
-    return Users.query.get(int(id))
+@jwt.user_identity_loader
+def user_identity_lookup(user):
+    return user.id
+
+
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    identity = jwt_data["sub"]
+    return Users.query.filter_by(id=identity).one_or_none()
 
 
 # Many to Many table for Companies and Meta
@@ -73,8 +76,7 @@ companies_meta = db.Table('companies_meta',
                           db.Column('company_id', db.Integer, db.ForeignKey(
                               'companies.company_id'), index=True),
                           db.Column('meta_id', db.Integer, db.ForeignKey(
-                              'meta.meta_id'))
-                          )
+                              'meta.meta_id')))
 
 
 class Companies(PaginationAPIMixin, db.Model):
@@ -94,7 +96,6 @@ class Companies(PaginationAPIMixin, db.Model):
                             lazy='joined', backref=db.backref('meta', lazy='subquery'))
 
     def __repr__(self):
-        # '<Company ID: {}>'.format(self.company_id)
         return f'<Company {self.company_id}: {self.company_name}>'
 
     def city_name(self):
@@ -136,7 +137,6 @@ class Cities(db.Model):
     city_lng = db.Column(db.Float(precision=8))
 
     def __repr__(self):
-        # '<City ID: {}>'.format(self.city_id)
         return f'<City {self.city_id}: {self.city_name} ({self.region})>'
 
     def get_or_create(self, dict):
@@ -169,7 +169,6 @@ class Meta(db.Model):
     meta_string = db.Column(db.String(120))
 
     def __repr__(self):
-        # '<Meta ID {}>'.format(self.meta_id)
         return f'<Meta {self.meta_id}: {self.meta_string} ({self.type})>'
 
     def get_or_create(self, meta_string, type):
@@ -193,10 +192,11 @@ class NewAdminSchema(ma.SQLAlchemySchema):
     # The Validation Field:
     username = ma.Str(validate=validate.Length(min=2, max=64), required=True)
     email = ma.Email(validate=validate.Length(min=2, max=64),
-                     required=True)  # validate.Email?
+                     required=True)
     password = ma.Str(validate=validate.Length(
         min=8, max=64), required=True, load_only=True)
 
+    # Additional Validation checks
     @post_load
     def username_exists(self, data, **kwargs):
         if Users.query.filter(Users.username == data['username']).one_or_none():
