@@ -14,8 +14,8 @@ If you would like to know more about the frontend of the FNDR app, you can take 
 
 * [Approach](#Approach)
 * [Features](#Features)
-* [Docs: Using the API](#Docs: Using the API)
-* [Docs: Running the project](#Docs: Running the project)
+* [Docs: Using the API](#API)
+* [Docs: Running the project](#Running)
 * [Next steps](#Next steps)
 * [Credits](#Credits)
 
@@ -39,12 +39,12 @@ If you would like to know more about the frontend of the FNDR app, you can take 
 -   Testing with Pytest
 -   File upload with AWS S3
 
-## Docs: Using the API
+## Docs: Using the API<a name="API"></a>
 
 You can find the documentation for API below:
 [![Overview of the API endpoints](https://fndr.s3.eu-central-1.amazonaws.com/API.png)](https://app.swaggerhub.com/apis-docs/thomas30/FNDRbackend/1.0.0#/)
 
-## Docs: Running the project
+## Docs: Running the project<a name="running"></a>
 
 The app was setup using a virtual environment with python 3.10. The dependencies can be found inrequirements.txt.
 
