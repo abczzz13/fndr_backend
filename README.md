@@ -34,7 +34,7 @@ If you would like to know more about the frontend of the FNDR app, you can take 
 ## Docs: Using the API
 
 You can find the documentation for API below:
-[![alt text](https://fndr.s3.amazonaws.com/API.png)](https://app.swaggerhub.com/apis-docs/thomas30/FNDRbackend/1.0.0#/)
+[![Overview of the API endpoints](https://fndr.s3.amazonaws.com/API.png)](https://app.swaggerhub.com/apis-docs/thomas30/FNDRbackend/1.0.0#/)
 
 ## Docs: Running the project
 
@@ -71,7 +71,6 @@ To run this project locally, you will be need to following enviroment variables:
 -   GOOGLE_API_KEY
 
 ## Next steps:
-
 
 -   Add a Google Maps feature
 -   File Upload for logos, using AWS S3
