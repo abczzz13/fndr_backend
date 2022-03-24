@@ -34,7 +34,7 @@ If you would like to know more about the frontend of the FNDR app, you can take 
 ## Docs: Using the API
 
 You can find the documentation for API below:
-[![Overview of the API endpoints](https://fndr.s3.amazonaws.com/API.png)](https://app.swaggerhub.com/apis-docs/thomas30/FNDRbackend/1.0.0#/)
+[![Overview of the API endpoints](https://fndr.s3.eu-central-1.amazonaws.com/API.png)](https://app.swaggerhub.com/apis-docs/thomas30/FNDRbackend/1.0.0#/)
 
 ## Docs: Running the project
 
