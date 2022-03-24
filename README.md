@@ -16,7 +16,7 @@ If you would like to know more about the frontend of the FNDR app, you can take 
 * [Features](#Features)
 * [Docs: Using the API](#API)
 * [Docs: Running the project](#Running)
-* [Next steps](#Next steps)
+* [Next steps](#Next)
 * [Credits](#Credits)
 
 
@@ -78,7 +78,7 @@ To run this project locally, you will be need to following enviroment variables:
 -   REDIS_URL
 -   GOOGLE_API_KEY
 
-## Next steps:
+## Next steps:<a name="next"></a>
 
 -   Add a Google Maps feature
 -   File Upload for logos, using AWS S3
