@@ -12,6 +12,14 @@ If you would like to know more about the frontend of the FNDR app, you can take 
 
 ## Table of Contents
 
+* [Approach](## Approach)
+* [Features](## Features)
+* [Docs: Using the API](## Docs: Using the API)
+* [Docs: Running the project](## Docs: Running the project)
+* [Next steps](## Next steps)
+* [Credits](## Credits)
+
+
 ## Approach
 
 -   Use version control (GIT) from the start of the project
