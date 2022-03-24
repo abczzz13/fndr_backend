@@ -46,14 +46,14 @@ You can find the documentation for API below:
 
 ## Docs: Running the project<a name="running"></a>
 
-The app was setup using a virtual environment with python 3.10. The dependencies can be found inrequirements.txt.
+The app was setup using a virtual environment with python 3.10. The dependencies can be found in requirements.txt.
 
-Run the following commandlines to setup the virtual environment and install all the dependecies.
+Run the following commands to setup the virtual environment and install all the dependecies.
 
 -   pip install virtualenv
 -   python -m venv venv
--   pip install -r requirements.txt
 -   source venv/bin/activate
+-   pip install -r requirements.txt
 
 To run this project locally, you will be need to following enviroment variables:
 
