@@ -36,9 +36,16 @@ class Users(db.Model):
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True,
-                         unique=True, nullable=False)
-    email = db.Column(db.String(128), index=True, unique=True, nullable=False)
+    username = db.Column(
+        db.String(64),
+        index=True,
+        unique=True,
+        nullable=False)
+    email = db.Column(
+        db.String(128),
+        index=True,
+        unique=True,
+        nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -73,27 +80,38 @@ def user_lookup_callback(_jwt_header, jwt_data):
 
 # Many to Many table for Companies and Meta
 companies_meta = db.Table('companies_meta',
-                          db.Column('company_id', db.Integer, db.ForeignKey(
-                              'companies.company_id'), index=True),
-                          db.Column('meta_id', db.Integer, db.ForeignKey(
-                              'meta.meta_id')))
+                          db.Column('company_id',
+                                    db.Integer,
+                                    db.ForeignKey('companies.company_id'),
+                                    index=True),
+                          db.Column('meta_id',
+                                    db.Integer,
+                                    db.ForeignKey('meta.meta_id')))
 
 
 class Companies(PaginationAPIMixin, db.Model):
     __tablename__ = 'companies'
 
     company_id = db.Column(db.Integer, primary_key=True)
-    company_name = db.Column(db.String(64), unique=True, nullable=False)
+    company_name = db.Column(
+        db.String(64),
+        unique=True,
+        nullable=False)
     logo_image_src = db.Column(db.String(255), default='')
-    city_id = db.Column(db.Integer, db.ForeignKey(
-        'cities.city_id'), nullable=False)
+    city_id = db.Column(
+        db.Integer,
+        db.ForeignKey('cities.city_id'),
+        nullable=False)
     website = db.Column(db.String(255), nullable=False)
     year = db.Column(db.Integer)
     company_size = db.Column(db.String(64), nullable=False)
-    city = db.relationship('Cities', backref='company',
+    city = db.relationship('Cities',
+                           backref='company',
                            lazy='joined')
-    metas = db.relationship('Meta', secondary=companies_meta,
-                            lazy='joined', backref=db.backref('meta', lazy='subquery'))
+    metas = db.relationship('Meta',
+                            secondary=companies_meta,
+                            lazy='joined',
+                            backref=db.backref('meta', lazy='subquery'))
 
     def __repr__(self):
         return f'<Company {self.company_id}: {self.company_name}>'
@@ -131,7 +149,10 @@ class Cities(db.Model):
     __tablename__ = 'cities'
 
     city_id = db.Column(db.Integer, primary_key=True)
-    city_name = db.Column(db.String(64), unique=True, nullable=False)
+    city_name = db.Column(
+        db.String(64),
+        unique=True,
+        nullable=False)
     region = db.Column(db.String(64))
     city_lat = db.Column(db.Float(precision=8))
     city_lng = db.Column(db.Float(precision=8))
@@ -147,8 +168,11 @@ class Cities(db.Model):
                 dict['region'] = 'Remote'
 
             coordinates = get_coordinates(dict['city_name'])
-            new_city = Cities(city_name=dict['city_name'].title(), region=dict['region'],
-                              city_lat=coordinates['lat'], city_lng=coordinates['lng'])
+            new_city = Cities(
+                city_name=dict['city_name'].title(),
+                region=dict['region'],
+                city_lat=coordinates['lat'],
+                city_lng=coordinates['lng'])
 
             db.session.add(new_city)
             db.session.commit()
@@ -190,11 +214,16 @@ class NewAdminSchema(ma.SQLAlchemySchema):
         include_fk = True
 
     # The Validation Field:
-    username = ma.Str(validate=validate.Length(min=2, max=64), required=True)
-    email = ma.Email(validate=validate.Length(min=2, max=64),
-                     required=True)
-    password = ma.Str(validate=validate.Length(
-        min=8, max=64), required=True, load_only=True)
+    username = ma.Str(
+        validate=validate.Length(min=2, max=64),
+        required=True)
+    email = ma.Email(
+        validate=validate.Length(min=2, max=64),
+        required=True)
+    password = ma.Str(
+        validate=validate.Length(min=8, max=64),
+        required=True,
+        load_only=True)
 
     # Additional Validation checks
     @post_load
@@ -223,15 +252,20 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
     sizes = ['1-10', '11-50', '51-100', 'GT-100']
 
     # The Validation fields
-    company_name = ma.Str(validate=validate.Length(
-        min=2, max=64), required=True)
+    company_name = ma.Str(
+        validate=validate.Length(min=2, max=64),
+        required=True)
     logo_image_src = ma.URL()
-    city_name = ma.Str(validate=validate.Length(min=2, max=64), required=True)
+    city_name = ma.Str(
+        validate=validate.Length(min=2, max=64),
+        required=True)
     region = ma.Str(validate=validate.OneOf(regions))
     website = ma.URL(required=True)
-    year = ma.Int(validate=validate.Range(min=1890, max=datetime.now().year))
-    company_size = ma.Str(validate=validate.OneOf(
-        sizes), required=True)
+    year = ma.Int(
+        validate=validate.Range(min=1890, max=datetime.now().year))
+    company_size = ma.Str(
+        validate=validate.OneOf(sizes),
+        required=True)
     disciplines = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
     branches = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
     tags = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
@@ -263,13 +297,19 @@ class CompaniesPatchSchema(ma.SQLAlchemySchema):
     sizes = ['1-10', '11-50', '51-100', 'GT-100']
 
     # The Validation fields
-    company_name = ma.Str(validate=validate.Length(
-        min=2, max=64), required=True)
+    company_name = ma.Str(
+        validate=validate.Length(min=2, max=64),
+        required=True)
     logo_image_src = ma.URL()
-    city_name = ma.Str(validate=validate.Length(min=2, max=64), required=True)
-    region = ma.Str(validate=validate.OneOf(regions), dump_only=True)
+    city_name = ma.Str(
+        validate=validate.Length(min=2, max=64),
+        required=True)
+    region = ma.Str(
+        validate=validate.OneOf(regions),
+        dump_only=True)
     website = ma.URL(required=True)
-    year = ma.Int(validate=validate.Range(min=1890, max=datetime.now().year))
+    year = ma.Int(
+        validate=validate.Range(min=1890, max=datetime.now().year))
     company_size = ma.Str(validate=validate.OneOf(
         sizes), required=True)
     disciplines = ma.List(

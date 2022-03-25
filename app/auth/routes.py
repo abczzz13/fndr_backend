@@ -30,7 +30,10 @@ def create_token():
 
     # Create and return token if credentials are valid
     access_token = create_access_token(identity=user)
-    return jsonify({'token': access_token, 'user_id': user.id, 'username': user.username})
+    return jsonify({
+        'token': access_token,
+        'user_id': user.id,
+        'username': user.username})
 
 
 @bp.route('token', methods=['DELETE'])
