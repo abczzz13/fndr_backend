@@ -43,7 +43,9 @@ def insert_data_db(init_testdb):
 
 @pytest.fixture(scope='module')
 def new_user(init_testdb):
-    new_user = Users(username='Test User', email='test@fnder-backend.com')
+    new_user = Users(
+        username='Test User',
+        email='test@fnder-backend.com')
     new_user.set_password('testtest')
 
     db.session.add(new_user)
@@ -60,8 +62,10 @@ def get_token(client, init_testdb, new_user):
         "password": "testtest"
     }
 
-    response = client.post("/auth/token", data=json.dumps(data),
-                           headers={"Content-Type": "application/json"},)
+    response = client.post(
+        "/auth/token",
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json"},)
 
     result = json.loads(response.get_data(as_text=True))
 

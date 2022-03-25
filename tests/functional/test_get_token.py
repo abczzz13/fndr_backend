@@ -13,8 +13,10 @@ def test_get_token(client, new_user):
         "password": "testtest"
     }
 
-    response = client.post("/auth/token", data=json.dumps(data),
-                           headers={"Content-Type": "application/json"},)
+    response = client.post(
+        "/auth/token",
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json"},)
 
     result = json.loads(response.get_data(as_text=True))
 
@@ -34,8 +36,10 @@ def test_get_token_invalid(client, new_user):
         "password": "testtest"
     }
 
-    response = client.post("/auth/token", data=json.dumps(data),
-                           headers={"Content-Type": "application/json"},)
+    response = client.post(
+        "/auth/token",
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json"},)
 
     result = json.loads(response.get_data(as_text=True))
 

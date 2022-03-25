@@ -33,8 +33,12 @@ def test_post_valid_company(client, get_token):
         "year": 1969
     }
 
-    response = client.post('/api/v1/companies', data=json.dumps(data),
-                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.post(
+        '/api/v1/companies',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
 
     result = json.loads(response.get_data(as_text=True))
 
@@ -62,8 +66,13 @@ def test_post_valid_company_optional_fields(client, get_token):
         "website": "https://testdetest.nl"
     }
 
-    response = client.post('/api/v1/companies', data=json.dumps(data),
-                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.post(
+        '/api/v1/companies',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
+
     result = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 201
@@ -107,8 +116,13 @@ def test_post_invalid_company_id(client, insert_data_db, get_token):
         "year": 1969
     }
 
-    response = client.post('/api/v1/companies', data=json.dumps(data),
-                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.post(
+        '/api/v1/companies',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
+
     result = json.loads(response.get_data(as_text=True))
 
     assert result['message']['_schema'][0] == "Create new company cannot include company_id. For modifying existing companies please use the PATCH method"
@@ -146,8 +160,13 @@ def test_post_invalid_company_name(client, get_token):
         "year": 1969
     }
 
-    response = client.post('/api/v1/companies', data=json.dumps(data),
-                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.post(
+        '/api/v1/companies',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
+
     result = json.loads(response.get_data(as_text=True))
 
     assert result['message']['_schema'][0] == "A company already exists with this company_name. Please use the PATCH method if you would like to modify this company or use a different company_name if you would like to add a different company."
@@ -181,8 +200,13 @@ def test_post_invalid_company_required_fields(client, get_token):
         "year": 1969
     }
 
-    response = client.post('/api/v1/companies', data=json.dumps(data),
-                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.post(
+        '/api/v1/companies',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
+
     result = json.loads(response.get_data(as_text=True))
 
     assert result['message']['city_name'][0] == "Missing data for required field."

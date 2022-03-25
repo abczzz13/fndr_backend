@@ -14,8 +14,12 @@ def test_post_valid_user(client, get_token):
         "password": "abcdefgh"
     }
 
-    response = client.post('/auth/register', data=json.dumps(data),
-                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.post(
+        '/auth/register',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
 
     result = json.loads(response.get_data(as_text=True))
 
@@ -24,8 +28,8 @@ def test_post_valid_user(client, get_token):
     assert response.status_code == 201
     assert result['id'] == 2
     assert result['username'] == 'Test Gebruiker #323'
-    assert user.check_password(data['password']) == True
-    assert user.check_password('heelwatanders') == False
+    assert user.check_password(data['password'])
+    assert not user.check_password('heelwatanders')
 
 
 def test_post_invalid_username(client, get_token):
@@ -40,8 +44,12 @@ def test_post_invalid_username(client, get_token):
         "password": "abcdefgh"
     }
 
-    response = client.post('/auth/register', data=json.dumps(data),
-                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.post(
+        '/auth/register',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
 
     result = json.loads(response.get_data(as_text=True))
 
@@ -60,8 +68,12 @@ def test_post_invalid_email(client, get_token):
         "password": "abcdefgh"
     }
 
-    response = client.post('/auth/register', data=json.dumps(data),
-                           headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.post(
+        '/auth/register',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
 
     result = json.loads(response.get_data(as_text=True))
 
@@ -82,10 +94,18 @@ def test_post_invalid_user(client, get_token):
         "password": "abcd"
     }
 
-    response1 = client.post('/auth/register', data=json.dumps(data1),
-                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
-    response2 = client.post('/auth/register', data=json.dumps(data2),
-                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response1 = client.post(
+        '/auth/register',
+        data=json.dumps(data1),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
+
+    response2 = client.post(
+        '/auth/register',
+        data=json.dumps(data2),
+        headers={'Content-Type': 'application/json',
+                 'Authorization': 'Bearer {}'.format(get_token)},)
 
     result1 = json.loads(response1.get_data(as_text=True))
     result2 = json.loads(response2.get_data(as_text=True))

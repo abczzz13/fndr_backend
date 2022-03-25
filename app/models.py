@@ -1,3 +1,4 @@
+'''Models for the different Tables in DB with additional methods and validation'''
 from datetime import datetime
 from app import db, ma, jwt
 from .utils import get_coordinates
@@ -8,8 +9,10 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 # Pagination mixin Class
 class PaginationAPIMixin(object):
+    '''Class for adding pagination'''
     @staticmethod
-    def to_collection_dict(query, page, per_page, endpoint, **kwargs):
+    def to_collection_dict(query, page, per_page, endpoint, **kwargs) -> dict:
+        '''Preparing the output for the GET companies as dictionary with pagination'''
         resources = query.paginate(page, per_page, False)
         data = {
             # Making a dictionary of the query results
@@ -47,6 +50,7 @@ class PaginationAPIMixin(object):
 
 
 class Users(db.Model):
+    '''Model for users'''
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -67,12 +71,15 @@ class Users(db.Model):
         return f'<User {self.id}: {self.username} ({self.email})>'
 
     def set_password(self, password):
+        '''Set password'''
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    def check_password(self, password) -> bool:
+        '''Check password'''
         return check_password_hash(self.password_hash, password)
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        '''Return user data as a dictionary'''
         data = {
             'id': self.id,
             'username': self.username,
@@ -107,6 +114,7 @@ companies_meta = db.Table(
 
 
 class Companies(PaginationAPIMixin, db.Model):
+    ''' Model for companies'''
     __tablename__ = 'companies'
 
     company_id = db.Column(db.Integer, primary_key=True)
@@ -134,9 +142,11 @@ class Companies(PaginationAPIMixin, db.Model):
         return f'<Company {self.company_id}: {self.company_name}>'
 
     def city_name(self):
+        '''Makes city_name accessible on the object'''
         self.city_name = self.city.city_name
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        '''Return company as a dictionary'''
 
         data = {
             'company_id': self.company_id,
@@ -163,6 +173,7 @@ class Companies(PaginationAPIMixin, db.Model):
 
 
 class Cities(db.Model):
+    '''Models for cities'''
     __tablename__ = 'cities'
 
     city_id = db.Column(db.Integer, primary_key=True)
@@ -177,17 +188,18 @@ class Cities(db.Model):
     def __repr__(self):
         return f'<City {self.city_id}: {self.city_name} ({self.region})>'
 
-    def get_or_create(self, dict):
+    def get_or_create(self, city_dict) -> int:
+        '''Returns city if it exists, otherwise creates the new city'''
         query = Cities.query.filter_by(
-            city_name=dict['city_name'].title()).first()
+            city_name=city_dict['city_name'].title()).first()
         if query is None:
-            if 'region' not in dict:
-                dict['region'] = 'Remote'
+            if 'region' not in city_dict:
+                city_dict['region'] = 'Remote'
 
-            coordinates = get_coordinates(dict['city_name'])
+            coordinates = get_coordinates(city_dict['city_name'])
             new_city = Cities(
-                city_name=dict['city_name'].title(),
-                region=dict['region'],
+                city_name=city_dict['city_name'].title(),
+                region=city_dict['region'],
                 city_lat=coordinates['lat'],
                 city_lng=coordinates['lng'])
 
@@ -203,6 +215,7 @@ class Cities(db.Model):
 
 
 class Meta(db.Model):
+    '''Model for meta information'''
     __tablename__ = 'meta'
 
     meta_id = db.Column(db.Integer, primary_key=True)
@@ -212,11 +225,12 @@ class Meta(db.Model):
     def __repr__(self):
         return f'<Meta {self.meta_id}: {self.meta_string} ({self.type})>'
 
-    def get_or_create(self, meta_string, type):
+    def get_or_create(self, meta_string, meta_type) -> int:
+        '''Returns meta if it exists, otherwise creates the new meta'''
         query = Meta.query.filter_by(
-            type=type, meta_string=meta_string).first()
+            type=meta_type, meta_string=meta_string).first()
         if query is None:
-            new_meta = Meta(type=type, meta_string=meta_string)
+            new_meta = Meta(type=meta_type, meta_string=meta_string)
             db.session.add(new_meta)
             db.session.commit()
             setattr(self, 'meta_id', new_meta.meta_id)
@@ -226,7 +240,9 @@ class Meta(db.Model):
 
 
 class NewAdminSchema(ma.SQLAlchemySchema):
+    '''Validation Schema for users/admins'''
     class Meta:
+        '''Meta information'''
         model = Users
         include_fk = True
 
@@ -245,6 +261,7 @@ class NewAdminSchema(ma.SQLAlchemySchema):
     # Additional Validation checks
     @post_load
     def username_exists(self, data, **kwargs):
+        '''Lookup if username already exists'''
         if Users.query.filter(Users.username == data['username']).one_or_none():
             raise ValidationError(
                 "This username is already in use, please use a different username.")
@@ -252,6 +269,7 @@ class NewAdminSchema(ma.SQLAlchemySchema):
 
     @post_load
     def email_exists(self, data, **kwargs):
+        '''Lookup if email already exists'''
         if Users.query.filter(Users.email == data['email']).one_or_none():
             raise ValidationError(
                 "This email address is already in use, please use a different email address.")
@@ -259,7 +277,9 @@ class NewAdminSchema(ma.SQLAlchemySchema):
 
 
 class CompaniesValidationSchema(ma.SQLAlchemySchema):
+    '''Validation Schema for POST company'''
     class Meta:
+        '''Meta information'''
         model = Companies
         include_fk = True
 
@@ -290,6 +310,7 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
     # Additional Validation checks
     @pre_load
     def company_id_exists(self, data, **kwargs):
+        '''Validate there is not company_id in data'''
         if "company_id" in data:
             raise ValidationError(
                 "Create new company cannot include company_id. For modifying existing companies please use the PATCH method")
@@ -297,6 +318,7 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
 
     @post_load
     def company_name_exists(self, data, **kwargs):
+        '''Lookup if company_name already exists'''
         if Companies.query.filter(Companies.company_name == data['company_name'].title()).one_or_none():
             raise ValidationError(
                 "A company already exists with this company_name. Please use the PATCH method if you would like to modify this company or use a different company_name if you would like to add a different company.")
@@ -304,7 +326,9 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
 
 
 class CompaniesPatchSchema(ma.SQLAlchemySchema):
+    ''' Validation Schema for PATCH company'''
     class Meta:
+        '''Meta information'''
         model = Companies
         include_fk = True
 
@@ -338,6 +362,7 @@ class CompaniesPatchSchema(ma.SQLAlchemySchema):
     # Additional Validation check
     @post_load
     def company_name_exists(self, data, **kwargs):
+        '''Lookup if company_name already exists'''
         if 'company_name' in data:
             company = Companies.query.filter_by(
                 company_name=data['company_name'].title()).first()

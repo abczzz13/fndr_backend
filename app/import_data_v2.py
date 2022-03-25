@@ -1,12 +1,6 @@
 import json
 from app import db
 from app.models import Companies, Cities, Meta
-'''
-Run within Flask Shell
-Run the following commands in the Flask Shell:
-from app.import_data_v2 import import_data
-import_data('db.json')
-'''
 
 
 def insert_meta(meta_list, type, company_id):
@@ -18,7 +12,9 @@ def insert_meta(meta_list, type, company_id):
             meta_id = meta.get_or_create(meta_string, type)
 
             try:
-                meta_input = f'INSERT INTO companies_meta (meta_id, company_id) VALUES ({meta_id}, {company_id}) ON CONFLICT DO NOTHING'
+                meta_input = f'INSERT INTO companies_meta (meta_id, company_id) \
+                                    VALUES ({meta_id}, {company_id}) \
+                                        ON CONFLICT DO NOTHING'
                 db.session.execute(meta_input)
                 db.session.commit()
             except:
@@ -35,8 +31,11 @@ def insert_city(dict):
     query = Cities.query.filter_by(city_name=dict['city_name'].title()).first()
     result = {}
 
+    # If not get city_id
     if query is not None:
         result['city_id'] = query.city_id
+
+    # Else add the city
     else:
         regions = ['Remote', 'Drenthe', 'Flevoland', 'Friesland', 'Gelderland', 'Groningen', 'Limburg',
                    'Noord-Brabant', 'Noord-Holland', 'Overijssel', 'Utrecht', 'Zuid-Holland', 'Zeeland']
@@ -44,10 +43,14 @@ def insert_city(dict):
             dict['region'] = 'Remote'
 
         new_city = Cities(
-            city_name=dict['city_name'].title(), region=dict['region'])
+            city_name=dict['city_name'].title(),
+            region=dict['region'])
 
+        # Insert into DB
         db.session.add(new_city)
         db.session.commit()
+
+        # Prepare result to return
         result['city_id'] = new_city.city_id
         result['region'] = new_city.region
 
@@ -86,9 +89,14 @@ def import_data(import_file):
 
                 # If city is not in the cities dict, add the city and company to the DB
                 city_insert = Cities(
-                    city_name=agency['city'].title(), region=region)
-                company_insert = Companies(company_name=agency['name'].title(), logo_image_src=agency['eguideImageSrc'],
-                                           website=agency['website'], year=agency['yearEstablished'], company_size=company_size)
+                    city_name=agency['city'].title(),
+                    region=region)
+                company_insert = Companies(
+                    company_name=agency['name'].title(),
+                    logo_image_src=agency['eguideImageSrc'],
+                    website=agency['website'],
+                    year=agency['yearEstablished'],
+                    company_size=company_size)
                 city_insert.company.append(company_insert)
                 db.session.add(city_insert)
                 db.session.commit()
@@ -99,21 +107,30 @@ def import_data(import_file):
             # If city is in the cities dict, add the company with the city_id from the cities dict to the DB
             else:
                 # Get the city_id
-                city_id = [k for k, v in cities.items() if v ==
-                           agency['city'].title()][0]
+                city_id = [k for k, v in cities.items()
+                           if v == agency['city'].title()][0]
 
                 # Insert the company into the DB
-                company_insert = Companies(company_name=agency['name'].title(), logo_image_src=agency['eguideImageSrc'], city_id=city_id,
-                                           website=agency['website'], year=agency['yearEstablished'], company_size=company_size)
+                company_insert = Companies(
+                    company_name=agency['name'].title(),
+                    logo_image_src=agency['eguideImageSrc'],
+                    city_id=city_id,
+                    website=agency['website'],
+                    year=agency['yearEstablished'],
+                    company_size=company_size)
                 db.session.add(company_insert)
                 db.session.commit()
 
             # Insert meta information with insert_meta() function
-            insert_meta(agency['disciplines'], 'disciplines',
-                        company_insert.company_id)
-            insert_meta(agency['branches'], 'branches',
-                        company_insert.company_id)
-            insert_meta(agency['tags'], 'tags', company_insert.company_id)
-
-    # Closing the file
-    file.close()
+            insert_meta(
+                agency['disciplines'],
+                'disciplines',
+                company_insert.company_id)
+            insert_meta(
+                agency['branches'],
+                'branches',
+                company_insert.company_id)
+            insert_meta(
+                agency['tags'],
+                'tags',
+                company_insert.company_id)

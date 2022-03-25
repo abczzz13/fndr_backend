@@ -5,7 +5,7 @@ GET     /v1/companies       Returns all companies, multiple query parameters can
 POST    /v1/companies       Creates a new company
 GET     /v1/companies/:id   Returns company with specific company_id
 PATCH   /v1/companies/:id   Updates company with specific company_id
-DELETE  /v1/companies/:id   Deletes company with specific company_id        
+DELETE  /v1/companies/:id   Deletes company with specific company_id
 
 """
 from app import db, cache
@@ -126,18 +126,18 @@ def add_company():
     return response
 
 
-@bp.route('/v1/companies/<int:id>', methods=['GET'])
+@bp.route('/v1/companies/<int:company_id>', methods=['GET'])
 @cache.cached(timeout=30, query_string=True)
-def get_company(id):
+def get_company(company_id):
     """GET     /v1/companies/:id   Returns company with specific company_id"""
-    return jsonify(Companies.query.get_or_404(id).to_dict())
+    return jsonify(Companies.query.get_or_404(company_id).to_dict())
 
 
-@bp.route('/v1/companies/<int:id>', methods=['PATCH'])
+@bp.route('/v1/companies/<int:company_id>', methods=['PATCH'])
 @jwt_required()
-def update_company(id):
+def update_company(company_id):
     """PATCH   /v1/companies/:id   Updates company with specific company_id"""
-    company = Companies.query.get_or_404(id)
+    company = Companies.query.get_or_404(company_id)
 
     data = request.get_json() or {}
     data['id_for_check_company'] = company.company_id
@@ -159,11 +159,15 @@ def update_company(id):
             if field in ['disciplines', 'branches', 'tags']:
                 # TODO: Only removes the records from the companies_meta table, not the actual records in the Meta table (as these could still be in use by other companies)
                 # RAW SQL statement for finding orphaned meta records: "SELECT * FROM Meta WHERE meta_id NOT IN (SELECT meta_id FROM companies_meta);"
-                db.session.execute("DELETE FROM companies_meta WHERE companies_meta.company_id = :id AND companies_meta.meta_id IN (SELECT Meta.meta_id FROM Meta WHERE Meta.type = :type)", {
-                                   "id": id, "type": field})
+                db.session.execute(
+                    "DELETE FROM companies_meta \
+                        WHERE companies_meta.company_id = :id \
+                            AND companies_meta.meta_id IN (SELECT Meta.meta_id \
+                                FROM Meta WHERE Meta.type = :type)",
+                    {"id": company_id, "type": field})
 
                 # Adds the meta data:
-                insert_meta(validated_data[field], field, id)
+                insert_meta(validated_data[field], field, company_id)
                 validated_data.pop(field)
 
     # Make the update in the DB for the other fields
@@ -180,18 +184,18 @@ def update_company(id):
     return response
 
 
-@bp.route('/v1/companies/<int:id>', methods=['DELETE'])
+@bp.route('/v1/companies/<int:company_id>', methods=['DELETE'])
 @jwt_required()
-def delete_company(id):
+def delete_company(company_id):
     """DELETE  /v1/companies/:id   Deletes company with specific company_id"""
     # Lookup company_id and delete if exists
-    company = Companies.query.get_or_404(id)
+    company = Companies.query.get_or_404(company_id)
     db.session.delete(company)
     db.session.commit()
 
     # Create response
     message = {}
-    message['message'] = f"Company with company_id={id} has been deleted"
+    message['message'] = f"Company with company_id={company_id} has been deleted"
     response = jsonify(message)
     response.status_code = 200
 

@@ -1,3 +1,4 @@
+''' Initialization of the Flask app'''
 import os
 import logging
 from logging.handlers import RotatingFileHandler
@@ -22,6 +23,7 @@ cors = CORS()
 
 # Create the App
 def create_app(config_class=Config):
+    ''' Create the Flask app'''
     app = Flask(__name__)
 
     # Loading the Config
