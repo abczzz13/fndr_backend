@@ -120,7 +120,7 @@ def add_company():
     response = jsonify(new_company.to_dict())
     response.status_code = 201
     response.headers['Location'] = url_for(
-        'api.get_company', id=new_company.company_id)
+        'api.get_company', company_id=new_company.company_id)
 
     cache.clear()
     return response
@@ -178,7 +178,8 @@ def update_company(company_id):
     # Create response
     response = jsonify(company.to_dict())
     response.status_code = 200
-    response.headers['Location'] = url_for('api.get_company', id=id)
+    response.headers['Location'] = url_for(
+        'api.get_company', company_id=company_id)
 
     cache.clear()
     return response
