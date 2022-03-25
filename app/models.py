@@ -24,9 +24,23 @@ class PaginationAPIMixin(object):
             # Links to current/next/previous/ pages
             # TODO: Update urls to include query parameters
             '_links': {
-                'self': url_for(endpoint, page=page, per_page=per_page, **kwargs),
-                'next': url_for(endpoint, page=page + 1, per_page=per_page, **kwargs) if resources.has_next else None,
-                'previous': url_for(endpoint, page=page - 1, per_page=per_page, **kwargs) if resources.has_prev else None
+                'self': url_for(
+                    endpoint,
+                    page=page,
+                    per_page=per_page,
+                    **kwargs),
+                'next': url_for(
+                    endpoint,
+                    page=page + 1,
+                    per_page=per_page,
+                    **kwargs)
+                if resources.has_next else None,
+                'previous': url_for(
+                    endpoint,
+                    page=page - 1,
+                    per_page=per_page,
+                    **kwargs)
+                if resources.has_prev else None
             }
         }
         return data
@@ -79,14 +93,17 @@ def user_lookup_callback(_jwt_header, jwt_data):
 
 
 # Many to Many table for Companies and Meta
-companies_meta = db.Table('companies_meta',
-                          db.Column('company_id',
-                                    db.Integer,
-                                    db.ForeignKey('companies.company_id'),
-                                    index=True),
-                          db.Column('meta_id',
-                                    db.Integer,
-                                    db.ForeignKey('meta.meta_id')))
+companies_meta = db.Table(
+    'companies_meta',
+    db.Column(
+        'company_id',
+        db.Integer,
+        db.ForeignKey('companies.company_id'),
+        index=True),
+    db.Column(
+        'meta_id',
+        db.Integer,
+        db.ForeignKey('meta.meta_id')))
 
 
 class Companies(PaginationAPIMixin, db.Model):
