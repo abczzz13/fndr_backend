@@ -22,58 +22,53 @@ from marshmallow import ValidationError
 @cache.cached(timeout=30, query_string=True)
 def get_companies():
     """GET     /v1/companies       Returns all companies, multiple query parameters can be used"""
-    param_dict = request.args.to_dict()
+
+    # Preparing the dict with all key/values from the request
+    request_dict = request.args.to_dict()
+
+    # The questions here is if I should change API documentation with the keys that match the DB or I should change the keys like below:
+    if 'company' in request_dict:
+        request_dict['company_name'] = request_dict.pop('company')
+    if 'size' in request_dict:
+        request_dict['company_size'] = request_dict.pop('size')
+    if 'city' in request_dict:
+        request_dict['city_name'] = request_dict.pop('city')
+    if 'branch' in request_dict:
+        request_dict['branches'] = request_dict.pop('branch')
+    if 'discipline' in request_dict:
+        request_dict['disciplines'] = request_dict.pop('discipline')
+    if 'tag' in request_dict:
+        request_dict['tags'] = request_dict.pop('tag')
 
     # Variables
-    page = 1
-    per_page = 15
+    page = int(request_dict.pop('page', 1))
+    per_page = int(request_dict.pop('per_page', 15))
     parameters = ['company', 'company_like', 'city', 'city_id', 'city_like', 'region',
-                  'size', 'year', 'tag', 'branch', 'discipline', 'page', 'per_page', 'filter_by']
+                  'size', 'year', 'tag', 'branch', 'discipline', 'filter_by', 'page', 'per_page', 'company_name', 'city_name', 'company_size']
+    meta = ['tags', 'branches', 'disciplines']
     query = Companies.query.join(Cities)
-
-    # Iterate through all the parameters and adjust the query based on the parameters
-    for parameter in param_dict:
-        # Return error 400 if a unkown parameter has been found
-        if parameter not in parameters:
-            return error_response(400, "The parameter(s) you have used are unknown. Please use one or multiple of the following parameters: {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}".format(*parameters))
-        if parameter == 'company':
-            query = query.filter(Companies.company_name ==
-                                 param_dict[parameter])
-        if parameter == 'company_like':
+    print(request_dict)
+    for key in request_dict:
+        if key not in parameters:
+            return error_response(400, "The parameter(s) you have used are unknown.\
+                Please use one or multiple of the following parameters:\
+                    {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}".format(*parameters))
+        if hasattr(Companies, key) and key != 'city_name':
+            query = query.filter(
+                getattr(Companies, key) == request_dict[key])
+        if hasattr(Cities, key):
+            query = query.filter(
+                getattr(Cities, key) == request_dict[key])
+        if key == 'company_like':
             query = query.filter(Companies.company_name.ilike(
-                '%' + param_dict[parameter] + '%'))
-        if parameter == 'city':
-            query = query.filter(Cities.city_name == param_dict[parameter])
-        if parameter == 'city_id':
-            query = query.filter(Cities.city_id == param_dict[parameter])
-        if parameter == 'city_like':
+                '%' + request_dict[key] + '%'))
+        if key == 'city_like':
             query = query.filter(Cities.city_name.ilike(
-                '%' + param_dict[parameter] + '%'))
-        if parameter == 'region':
-            query = query.filter(Cities.region == param_dict[parameter])
-        if parameter == 'size':
-            query = query.filter(Companies.company_size ==
-                                 str(param_dict[parameter]))
-        if parameter == 'year':
-            query = query.filter(Companies.year ==
-                                 param_dict[parameter])
-        if parameter == 'discipline':
-            query = query.join(companies_meta).join(Meta).filter(Meta.type == 'disciplines').filter(
-                Meta.meta_string.ilike(param_dict[parameter]))
-        if parameter == 'branch':
-            query = query.join(companies_meta).join(Meta).filter(Meta.type == 'branches').filter(
-                Meta.meta_string.ilike(param_dict[parameter]))
-        if parameter == 'tag':
-            query = query.join(companies_meta).join(Meta).filter(Meta.type == "tags").filter(
-                Meta.meta_string.ilike(param_dict[parameter]))
-        if parameter == 'order_by':
-            # query = query.order_by(....asc())
-            # TODO: implement order by
-            pass
-        if parameter == 'page':
-            page = int(param_dict[parameter])
-        if parameter == 'per_page':
-            per_page = int(param_dict[parameter])
+                '%' + request_dict[key] + '%'))
+        if key in meta:
+            query = query.join(companies_meta).join(Meta).filter(
+                Meta.type == key and
+                Meta.meta_string.ilike('%' + request_dict[key] + '%'))
 
     # Add pagination
     companies = Companies.to_collection_dict(
