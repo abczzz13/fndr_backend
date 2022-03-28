@@ -26,33 +26,20 @@ def get_companies():
     # Preparing the dict with all key/values from the request
     request_dict = request.args.to_dict()
 
-    # The questions here is if I should change API documentation with the keys that match the DB or I should change the keys like below:
-    if 'company' in request_dict:
-        request_dict['company_name'] = request_dict.pop('company')
-    if 'size' in request_dict:
-        request_dict['company_size'] = request_dict.pop('size')
-    if 'city' in request_dict:
-        request_dict['city_name'] = request_dict.pop('city')
-    if 'branch' in request_dict:
-        request_dict['branches'] = request_dict.pop('branch')
-    if 'discipline' in request_dict:
-        request_dict['disciplines'] = request_dict.pop('discipline')
-    if 'tag' in request_dict:
-        request_dict['tags'] = request_dict.pop('tag')
-
     # Variables
     page = int(request_dict.pop('page', 1))
     per_page = int(request_dict.pop('per_page', 15))
-    parameters = ['company', 'company_like', 'city', 'city_id', 'city_like', 'region',
-                  'size', 'year', 'tag', 'branch', 'discipline', 'filter_by', 'page', 'per_page', 'company_name', 'city_name', 'company_size']
+    parameters = ['company_name', 'company_like', 'city_name', 'city_id', 'city_like', 'region',
+                  'company_size', 'year', 'tags', 'branches', 'disciplines', 'page', 'per_page']
     meta = ['tags', 'branches', 'disciplines']
     query = Companies.query.join(Cities)
-    print(request_dict)
+
+    # Iterate over the query parameters and adjust query accordingly
     for key in request_dict:
         if key not in parameters:
-            return error_response(400, "The parameter(s) you have used are unknown.\
-                Please use one or multiple of the following parameters:\
-                    {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}, {13}".format(*parameters))
+            return error_response(400, """The parameter(s) you have used are unknown. \
+                Please use one or multiple of the following parameters: \
+                    {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}""".format(*parameters))
         if hasattr(Companies, key) and key != 'city_name':
             query = query.filter(
                 getattr(Companies, key) == request_dict[key])
@@ -67,8 +54,8 @@ def get_companies():
                 '%' + request_dict[key] + '%'))
         if key in meta:
             query = query.join(companies_meta).join(Meta).filter(
-                Meta.type == key and
-                Meta.meta_string.ilike('%' + request_dict[key] + '%'))
+                Meta.type == key).filter(
+                    Meta.meta_string.ilike('%' + request_dict[key] + '%'))
 
     # Add pagination
     companies = Companies.to_collection_dict(

@@ -85,7 +85,7 @@ def test_get_companies_size(client, init_testdb, insert_data_db):
     WHEN the '/api/companies' is requested with a size=11-50 parameter
     THEN the response will contain 19 records and their associated data
     '''
-    response = client.get('/api/v1/companies?size=11-50&per_page=20')
+    response = client.get('/api/v1/companies?company_size=11-50&per_page=20')
     data = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 200
@@ -94,11 +94,12 @@ def test_get_companies_size(client, init_testdb, insert_data_db):
 
 def test_get_multiple_parameters(client, init_testdb, insert_data_db):
     '''
-    GIVEN that there are 2 companies in the DB with size of '11-50' with city 'Rotterdam'
-    WHEN the '/api/companies' is requested with a size=11-50 and city=Rotterdam parameters
-    THEN the response will contain 2 records and their associated data
+    GIVEN that there is 1 company in the DB with size of 'GT-100' with city 'Rotterdam'
+    WHEN the '/api/companies' is requested with a company_size=GT-100 and city_name=Rotterdam parameters
+    THEN the response will contain 1 records and their associated data
     '''
-    response = client.get('/api/v1/companies?size=GT-100&city=Rijnsburg')
+    response = client.get(
+        '/api/v1/companies?company_size=GT-100&city_name=Rijnsburg')
     data = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 200
