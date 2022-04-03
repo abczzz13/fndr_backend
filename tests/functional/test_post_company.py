@@ -43,7 +43,7 @@ def test_post_valid_company(client, get_token):
     result = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 201
-    assert result['company_id'] == 1
+    assert result['company_id'] == 21
     assert result['company_name'] == 'Test company #999'
     assert result['city_name'] == 'Lutjebroek'
     assert result['region'] == 'Remote'
@@ -76,7 +76,7 @@ def test_post_valid_company_optional_fields(client, get_token):
     result = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 201
-    assert result['company_id'] == 2
+    assert result['company_id'] == 22
     assert result['company_name'] == 'Test company #777'
     assert result['city_name'] == 'Hoorn'
     assert result['company_size'] == 'GT-100'

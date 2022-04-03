@@ -1,7 +1,7 @@
 from flask import json
 
 
-def test_patch_valid_company(client, get_token, insert_data_db):
+def test_patch_valid_company(client, get_token):
     '''
     GIVEN a Flask application configured for testing
     WHEN a PATCH request is made to /api/v1/companies/1 with a valid patch information

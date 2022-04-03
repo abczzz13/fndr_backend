@@ -6,7 +6,7 @@ from flask import json
 import pytest
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def client():
 
     flask_app = create_app(config_class=TestConfig)
@@ -20,7 +20,7 @@ def client():
             yield test_client
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def init_testdb():
     # To make sure to start with a clean slate:
     db.drop_all()
@@ -36,12 +36,12 @@ def init_testdb():
     db.drop_all()
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def insert_data_db(init_testdb):
     import_data('test_db.json')
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope='session')
 def new_user(init_testdb):
     new_user = Users(
         username='Test User',
@@ -54,8 +54,8 @@ def new_user(init_testdb):
     return new_user
 
 
-@pytest.fixture(scope='module')
-def get_token(client, init_testdb, new_user):
+@pytest.fixture(scope='session')
+def get_token(client, new_user):
 
     data = {
         "username": "Test User",

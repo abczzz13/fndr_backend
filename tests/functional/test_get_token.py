@@ -1,7 +1,7 @@
 from flask import json
 
 
-def test_get_token(client, new_user):
+def test_get_token(client):
     '''
     GIVEN a Flask application configured for testing
     WHEN a POST request is made to /api/v1/token with valid user credentials
@@ -24,7 +24,7 @@ def test_get_token(client, new_user):
     assert result['token'] is not None
 
 
-def test_get_token_invalid(client, new_user):
+def test_get_token_invalid(client):
     '''
     GIVEN a Flask application configured for testing
     WHEN a POST request is made to /auth/token with invalid user credentials
