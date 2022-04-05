@@ -37,9 +37,15 @@ def get_companies():
     # Iterate over the query parameters and adjust query accordingly
     for key in request_dict:
         if key not in parameters:
-            return error_response(400, """The parameter(s) you have used are unknown. \
-                Please use one or multiple of the following parameters: \
-                    {0}, {1}, {2}, {3}, {4}, {5}, {6}, {7}, {8}, {9}, {10}, {11}, {12}""".format(*parameters))
+            string = "The parameter(s) you have used are unknown. Please use one or multiple of the following parameters: "
+            first = True
+            for parameter in parameters:
+                if first:
+                    string += f"{parameter}"
+                    first = False
+                else:
+                    string += f", {parameter}"
+            return error_response(400, string)
         if hasattr(Companies, key) and key != 'city_name':
             query = query.filter(
                 getattr(Companies, key) == request_dict[key])
@@ -139,8 +145,6 @@ def update_company(company_id):
                 validated_data['city_id'] = city_dict['city_id']
                 validated_data.pop('city_name')
             if field in ['disciplines', 'branches', 'tags']:
-                # TODO: Only removes the records from the companies_meta table, not the actual records in the Meta table (as these could still be in use by other companies)
-                # RAW SQL statement for finding orphaned meta records: "SELECT * FROM Meta WHERE meta_id NOT IN (SELECT meta_id FROM companies_meta);"
                 db.session.execute(
                     "DELETE FROM companies_meta \
                         WHERE companies_meta.company_id = :id \

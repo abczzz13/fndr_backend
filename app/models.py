@@ -25,7 +25,6 @@ class PaginationAPIMixin(object):
                 'total_items': resources.total
             },
             # Links to current/next/previous/ pages
-            # TODO: Update urls to include query parameters
             '_links': {
                 'self': url_for(
                     endpoint,

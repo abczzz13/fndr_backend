@@ -1,5 +1,5 @@
 """
-This module provides all the endpoints for cities API:
+This module provides all the endpoints for authentication API:
 
 POST    /token          Creates token if valid credentials
 DELETE  /token          Revokes token (not implemented yet)     
@@ -16,12 +16,12 @@ from flask_jwt_extended import create_access_token, jwt_required, current_user
 from marshmallow import ValidationError
 
 
-@bp.route('token', methods=['POST'])
+@bp.route("token", methods=["POST"])
 def create_token():
     """POST    /token          Creates token if valid credentials"""
     # Get User credentials from POST
-    username = request.json.get('username', None)
-    password = request.json.get('password', None)
+    username = request.json.get("username", None)
+    password = request.json.get("password", None)
 
     # Lookup user in DB and check credentials, return error if not valid
     user = Users.query.filter_by(username=username).one_or_none()
@@ -30,30 +30,17 @@ def create_token():
 
     # Create and return token if credentials are valid
     access_token = create_access_token(identity=user)
-    return jsonify({
-        'token': access_token,
-        'user_id': user.id,
-        'username': user.username})
-
-
-@bp.route('token', methods=['DELETE'])
-@jwt_required()
-def revoke_token():
-    """DELETE  /token          Revokes token (not implemented yet) """
-    # TODO: Revoke token
-    pass
+    return jsonify({"token": access_token, "user_id": user.id, "username": user.username})
 
 
 @bp.route("check_token", methods=["GET"])
 @jwt_required()
 def check_token():
     """GET     /check_token    Returns id/username of logged-in user"""
-    return jsonify(
-        id=current_user.id,
-        username=current_user.username)
+    return jsonify(id=current_user.id, username=current_user.username)
 
 
-@bp.route('register', methods=['POST'])
+@bp.route("register", methods=["POST"])
 @jwt_required()
 def register_admin():
     """POST    /register       Creates new user"""
@@ -66,10 +53,8 @@ def register_admin():
         return bad_request(err.messages)
 
     # Make a new user
-    new_admin = Users(
-        username=validated_data['username'],
-        email=validated_data['email'])
-    new_admin.set_password(validated_data['password'])
+    new_admin = Users(username=validated_data["username"], email=validated_data["email"])
+    new_admin.set_password(validated_data["password"])
 
     # Update DB
     db.session.add(new_admin)
