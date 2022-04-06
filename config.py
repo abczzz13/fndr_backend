@@ -76,10 +76,17 @@ class Config():
 
     LOG_TO_STDOUT = os.environ.get('LOG_TO_STDOUT')
 
+    MAX_CONTENT_LENGTH = 1024 * 1024
+    UPLOAD_EXTENSIONS = set(['.jpg', '.png', '.gif'])
+    S3_BUCKET_NAME = 'fndr'  # or also store in environment?
+    AWS_ACCESS_KEY = os.environ.get('AWS_ACCESS_KEY')
+    AWS_ACCESS_SECRET = os.environ.get('AWS_ACCESS_KEY')
+    S3_LOCATION = 'https://{}.s3.amazonaws.com/'.format(S3_BUCKET_NAME)
+
     GOOGLE_API_KEY = os.environ.get('GOOGLE_API_KEY')
     GEOLOCATE_COUNTRY = 'Nederland'
     GEOLOCATE_BASE_URL = 'https://maps.googleapis.com/maps/api/geocode/json'
-
+    
 
 class DevelopmentConfig(Config):
     DEBUG = True

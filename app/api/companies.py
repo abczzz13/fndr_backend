@@ -13,9 +13,12 @@ from app.api import bp
 from app.errors.handlers import bad_request, error_response
 from app.models import Companies, Cities, Meta, companies_meta, CompaniesValidationSchema, CompaniesPatchSchema
 from app.import_data_v2 import insert_meta, insert_city
+from app.utils import upload_file_to_s3, validate_image
+from config import Config
 from flask import jsonify, request, url_for
 from flask_jwt_extended import jwt_required
 from marshmallow import ValidationError
+from werkzeug.utils import secure_filename
 
 
 @bp.route('/v1/companies', methods=['GET'])
@@ -33,6 +36,8 @@ def get_companies():
                   'company_size', 'year', 'tags', 'branches', 'disciplines', 'page', 'per_page']
     meta = ['tags', 'branches', 'disciplines']
     query = Companies.query.join(Cities)
+    parameters = ['company', 'company_like', 'city', 'city_id', 'city_like', 'region',
+                  'size', 'year', 'tag', 'branch', 'discipline', 'filter_by', 'page', 'per_page']
 
     # Iterate over the query parameters and adjust query accordingly
     for key in request_dict:
@@ -63,7 +68,7 @@ def get_companies():
                 Meta.type == key).filter(
                     Meta.meta_string.ilike('%' + request_dict[key] + '%'))
 
-    # Add pagination
+    # Create dictionary output, including pagination and meta info
     companies = Companies.to_collection_dict(
         query.order_by(Companies.company_id.asc()),
         page, per_page, 'api.get_companies')
@@ -188,3 +193,34 @@ def delete_company(company_id):
 
     cache.clear()
     return response
+
+
+@bp.route('/v1/upload', methods=['POST'])
+@jwt_required()
+def upload_file():
+    if 'file' not in request.files:
+        return error_response(400, "No file key in request.files")
+
+    img = request.files['file']
+    if img.filename == "":
+        return error_response(400, "Please select a file")
+
+    filename = secure_filename(img.filename)
+    file_ext = os.path.splitext(filename)[1]
+
+    if file_ext not in Config.UPLOAD_EXTENSIONS or file_ext != validate_image(img.stream):
+        return error_response(400, f"Invalid file extension, please use .gif, .jpg or .png")
+
+    output = {}
+    output['url'] = str(upload_file_to_s3(img, Config.S3_BUCKET_NAME))
+
+    response = jsonify(output)
+    response.status_code = 201
+
+    return response
+
+    # TODO: We could also think about nameing the file ourselves...
+    # uploaded_file.save(os.path.join('static/avatars', current_user.get_id()))
+    # something like <company_id>_logo_<company_name>
+
+    # Additionally, it overrides files with the same name already in the bucket

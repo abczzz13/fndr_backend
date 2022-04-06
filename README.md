@@ -1,49 +1,51 @@
-## FNDR: Find the nearest IT company looking for you
+# FNDR: Find the nearest IT company looking for you
 
-# Introduction
+## Introduction
 
-The idea of the FNDR app is to list all the agencies, working in the ...., who might be looking for junior developers. On this platform you can filter the agencies on mutiple parameters such as location, size, ... and find more details about the agencies that might interest you.
+The idea of the FNDR app is to list all the agencies, working in the ...., who might be looking for junior developers. On this platform you can filter the agencies on mutiple parameters such as location, size, etc. and find more details about the agencies that might interest you.
 
-<fndr netlify link>
+[Here you can find a working version of the app](https://fndr.netlify.app/)
 
-For this app, I created the backend. By means of an API, the frontend could GET information from the database and adjust the information by POST/PATCH/DELETE.
+For this app, I created the backend in Flask. By means of an API, the frontend could GET information from the PostgresSQL database and adjust the information by POST/PATCH/DELETE.
 
-If you would like to know more about the frontend of the FNDR app, you can take a look over here. <fndr frontend link>
+If you would like to know more about the frontend of the FNDR app, you can take a look over [here](https://github.com/jodelajo/fndr).
 
-# Table of Contents
+## Table of Contents
 
-# Approach
+## Approach
 
 -   Use version control (GIT) from the start of the project
--   Start working with Pull Requests, <once the project has some substance>
+-   Start working with Pull Requests, after the initial setup phase
 -   Collaboration with issues on Github
 -   Use pytest
 -   Github Actions
--   Implement CI / CD
+-   Implement CI / CD Pipeline on Heroku
 
-# Features
+## Features
 
--   API
--   DB migrations
+-   RESTful API
+-   DB migrations with Alembic
 -   Redis Cache
 -   Auth with JWT's
 -   Validation with Marshmallow
 -   Testing with Pytest
 -   File upload with AWS S3
 
-# Docs: Using the API
+## Docs: Using the API
 
-api/v1/companies GET
-query parameters:
+You can find the documentation for API below:
+[![alt text](https://fndr.s3.amazonaws.com/API.png)](https://app.swaggerhub.com/apis-docs/thomas30/FNDRbackend/1.0.0#/)
 
-api/v1/companies/<id> POST
-api/v1/companies/<id> PATCH
-api/v1/companies/<id> DELETE
+## Docs: Running the project
 
-api/v1/cities GET
-query parameters:
+The app was setup using a virtual environment with python 3.10. The dependencies can be found inrequirements.txt.
 
-# Docs: Running the project
+Run the following commandlines to setup the virtual environment and install all the dependecies.
+
+-   pip install virtualenv
+-   python -m venv venv
+-   pip install -r requirements.txt
+-   source venv/bin/activate
 
 To run this project locally, you will be need to following enviroment variables:
 
@@ -64,15 +66,17 @@ To run this project locally, you will be need to following enviroment variables:
 -   CACHE_REDIS_HOST
 -   CACHE_REDIS_PORT
 -   CACHE_REDIS_DB
--   REDIS_URL
 -   CACHE_DEFAULT_TIMEOUT
+-   REDIS_URL
 -   GOOGLE_API_KEY
 
-# Next steps:
+## Next steps:
+
 
 -   Add a Google Maps feature
 -   File Upload for logos, using AWS S3
 -   Dockerize the project
 
-  
-# Credits:
+## Credits:
+
+I would like to thank Joanneke and Daria for their extensive work on the frontend. And of course, Rein, for all the feedback, guidance and help during this project.
