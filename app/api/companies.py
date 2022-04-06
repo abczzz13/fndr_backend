@@ -233,6 +233,7 @@ def update_company(id):
     company = Companies.query.get_or_404(id)
 
     data = request.get_json() or {}
+    data['id_for_check_company'] = company.company_id
 
     try:
         validated_data = CompaniesPatchSchema().load(data, partial=True)

@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The idea of the FNDR app is to list all the agencies, working in the ...., who might be looking for junior developers. On this platform you can filter the agencies on mutiple parameters such as location, size, etc. and find more details about the agencies that might interest you.
+The idea of the FNDR app is to list all the agencies, who might be looking for junior developers. On this platform you can filter the agencies on mutiple parameters such as location, size, etc. and find more details about the agencies that might interest you.
 
 [Here you can find a working version of the app](https://fndr.netlify.app/)
 
@@ -11,6 +11,14 @@ For this app, I created the backend in Flask. By means of an API, the frontend c
 If you would like to know more about the frontend of the FNDR app, you can take a look over [here](https://github.com/jodelajo/fndr).
 
 ## Table of Contents
+
+=======
+* [Approach](#Approach)
+* [Features](#Features)
+* [Docs: Using the API](#API)
+* [Docs: Running the project](#Running)
+* [Next steps](#Next)
+* [Credits](#Credits)
 
 ## Approach
 
@@ -31,21 +39,21 @@ If you would like to know more about the frontend of the FNDR app, you can take 
 -   Testing with Pytest
 -   File upload with AWS S3
 
-## Docs: Using the API
+## Docs: Using the API<a name="API"></a>
 
 You can find the documentation for API below:
-[![alt text](https://fndr.s3.amazonaws.com/API.png)](https://app.swaggerhub.com/apis-docs/thomas30/FNDRbackend/1.0.0#/)
+[![Overview of the API endpoints](https://fndr.s3.eu-central-1.amazonaws.com/API.png)](https://app.swaggerhub.com/apis-docs/thomas30/FNDRbackend/1.0.0#/)
 
-## Docs: Running the project
+## Docs: Running the project<a name="running"></a>
 
-The app was setup using a virtual environment with python 3.10. The dependencies can be found inrequirements.txt.
+The app was setup using a virtual environment with python 3.10. The dependencies can be found in requirements.txt.
 
-Run the following commandlines to setup the virtual environment and install all the dependecies.
+Run the following commands to setup the virtual environment and install all the dependecies.
 
 -   pip install virtualenv
 -   python -m venv venv
--   pip install -r requirements.txt
 -   source venv/bin/activate
+-   pip install -r requirements.txt
 
 To run this project locally, you will be need to following enviroment variables:
 
@@ -70,8 +78,7 @@ To run this project locally, you will be need to following enviroment variables:
 -   REDIS_URL
 -   GOOGLE_API_KEY
 
-## Next steps:
-
+## Next steps:<a name="next"></a>
 
 -   Add a Google Maps feature
 -   File Upload for logos, using AWS S3
