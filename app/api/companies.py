@@ -8,6 +8,7 @@ PATCH   /v1/companies/:id   Updates company with specific company_id
 DELETE  /v1/companies/:id   Deletes company with specific company_id
 
 """
+import os
 from app import db, cache
 from app.api import bp
 from app.errors.handlers import bad_request, error_response
@@ -21,7 +22,7 @@ from marshmallow import ValidationError
 from werkzeug.utils import secure_filename
 
 
-@bp.route('/v1/companies', methods=['GET'])
+@bp.route("/v1/companies", methods=["GET"])
 @cache.cached(timeout=30, query_string=True)
 def get_companies():
     """GET     /v1/companies       Returns all companies, multiple query parameters can be used"""
@@ -30,19 +31,32 @@ def get_companies():
     request_dict = request.args.to_dict()
 
     # Variables
-    page = int(request_dict.pop('page', 1))
-    per_page = int(request_dict.pop('per_page', 15))
-    parameters = ['company_name', 'company_like', 'city_name', 'city_id', 'city_like', 'region',
-                  'company_size', 'year', 'tags', 'branches', 'disciplines', 'page', 'per_page']
-    meta = ['tags', 'branches', 'disciplines']
+    page = int(request_dict.pop("page", 1))
+    per_page = int(request_dict.pop("per_page", 15))
+    parameters = [
+        "company_name",
+        "company_like",
+        "city_name",
+        "city_id",
+        "city_like",
+        "region",
+        "company_size",
+        "year",
+        "tags",
+        "branches",
+        "disciplines",
+        "page",
+        "per_page",
+    ]
+    meta = ["tags", "branches", "disciplines"]
     query = Companies.query.join(Cities)
-    parameters = ['company', 'company_like', 'city', 'city_id', 'city_like', 'region',
-                  'size', 'year', 'tag', 'branch', 'discipline', 'filter_by', 'page', 'per_page']
 
     # Iterate over the query parameters and adjust query accordingly
     for key in request_dict:
         if key not in parameters:
-            string = "The parameter(s) you have used are unknown. Please use one or multiple of the following parameters: "
+            string = (
+                "The parameter(s) you have used are unknown. Please use one or multiple of the following parameters: "
+            )
             first = True
             for parameter in parameters:
                 if first:
@@ -51,32 +65,31 @@ def get_companies():
                 else:
                     string += f", {parameter}"
             return error_response(400, string)
-        if hasattr(Companies, key) and key != 'city_name':
-            query = query.filter(
-                getattr(Companies, key) == request_dict[key])
+        if hasattr(Companies, key) and key != "city_name":
+            query = query.filter(getattr(Companies, key) == request_dict[key])
         if hasattr(Cities, key):
-            query = query.filter(
-                getattr(Cities, key) == request_dict[key])
-        if key == 'company_like':
-            query = query.filter(Companies.company_name.ilike(
-                '%' + request_dict[key] + '%'))
-        if key == 'city_like':
-            query = query.filter(Cities.city_name.ilike(
-                '%' + request_dict[key] + '%'))
+            query = query.filter(getattr(Cities, key) == request_dict[key])
+        if key == "company_like":
+            query = query.filter(Companies.company_name.ilike("%" + request_dict[key] + "%"))
+        if key == "city_like":
+            query = query.filter(Cities.city_name.ilike("%" + request_dict[key] + "%"))
         if key in meta:
-            query = query.join(companies_meta).join(Meta).filter(
-                Meta.type == key).filter(
-                    Meta.meta_string.ilike('%' + request_dict[key] + '%'))
+            query = (
+                query.join(companies_meta)
+                .join(Meta)
+                .filter(Meta.type == key)
+                .filter(Meta.meta_string.ilike("%" + request_dict[key] + "%"))
+            )
 
     # Create dictionary output, including pagination and meta info
     companies = Companies.to_collection_dict(
-        query.order_by(Companies.company_id.asc()),
-        page, per_page, 'api.get_companies')
+        query.order_by(Companies.company_id.asc()), page, per_page, "api.get_companies"
+    )
 
     return jsonify(companies)
 
 
-@bp.route('/v1/companies', methods=['POST'])
+@bp.route("/v1/companies", methods=["POST"])
 @jwt_required()
 def add_company():
     """POST    /v1/companies       Creates a new company"""
@@ -90,12 +103,11 @@ def add_company():
 
     # Check if city is already in DB:
     city = Cities()
-    validated_data['city_id'] = city.get_or_create(validated_data)
+    validated_data["city_id"] = city.get_or_create(validated_data)
 
     # Create new company
     new_company = Companies()
-    fields = ['company_name', 'logo_image_src',
-              'website', 'year', 'company_size', 'city_id']
+    fields = ["company_name", "logo_image_src", "website", "year", "company_size", "city_id"]
     for field in fields:
         if field in validated_data:
             setattr(new_company, field, validated_data[field])
@@ -104,7 +116,7 @@ def add_company():
     db.session.commit()
 
     # Insert Meta Data:
-    meta = ['disciplines', 'branches', 'tags']
+    meta = ["disciplines", "branches", "tags"]
     for field in meta:
         if field in validated_data:
             insert_meta(validated_data[field], field, new_company.company_id)
@@ -112,28 +124,27 @@ def add_company():
     # Create response
     response = jsonify(new_company.to_dict())
     response.status_code = 201
-    response.headers['Location'] = url_for(
-        'api.get_company', company_id=new_company.company_id)
+    response.headers["Location"] = url_for("api.get_company", company_id=new_company.company_id)
 
     cache.clear()
     return response
 
 
-@bp.route('/v1/companies/<int:company_id>', methods=['GET'])
+@bp.route("/v1/companies/<int:company_id>", methods=["GET"])
 @cache.cached(timeout=30, query_string=True)
 def get_company(company_id):
     """GET     /v1/companies/:id   Returns company with specific company_id"""
     return jsonify(Companies.query.get_or_404(company_id).to_dict())
 
 
-@bp.route('/v1/companies/<int:company_id>', methods=['PATCH'])
+@bp.route("/v1/companies/<int:company_id>", methods=["PATCH"])
 @jwt_required()
 def update_company(company_id):
     """PATCH   /v1/companies/:id   Updates company with specific company_id"""
     company = Companies.query.get_or_404(company_id)
 
     data = request.get_json() or {}
-    data['id_for_check_company'] = company.company_id
+    data["id_for_check_company"] = company.company_id
 
     # Validate input
     try:
@@ -142,20 +153,21 @@ def update_company(company_id):
         return bad_request(err.messages)
 
     # Make the update in the DB for city and meta infor
-    fields_in_related_tables = ['city_name', 'disciplines', 'branches', 'tags']
+    fields_in_related_tables = ["city_name", "disciplines", "branches", "tags"]
     for field in fields_in_related_tables:
         if field in validated_data:
-            if field == 'city_name':
+            if field == "city_name":
                 city_dict = insert_city(validated_data)
-                validated_data['city_id'] = city_dict['city_id']
-                validated_data.pop('city_name')
-            if field in ['disciplines', 'branches', 'tags']:
+                validated_data["city_id"] = city_dict["city_id"]
+                validated_data.pop("city_name")
+            if field in ["disciplines", "branches", "tags"]:
                 db.session.execute(
                     "DELETE FROM companies_meta \
                         WHERE companies_meta.company_id = :id \
                             AND companies_meta.meta_id IN (SELECT Meta.meta_id \
                                 FROM Meta WHERE Meta.type = :type)",
-                    {"id": company_id, "type": field})
+                    {"id": company_id, "type": field},
+                )
 
                 # Adds the meta data:
                 insert_meta(validated_data[field], field, company_id)
@@ -169,14 +181,13 @@ def update_company(company_id):
     # Create response
     response = jsonify(company.to_dict())
     response.status_code = 200
-    response.headers['Location'] = url_for(
-        'api.get_company', company_id=company_id)
+    response.headers["Location"] = url_for("api.get_company", company_id=company_id)
 
     cache.clear()
     return response
 
 
-@bp.route('/v1/companies/<int:company_id>', methods=['DELETE'])
+@bp.route("/v1/companies/<int:company_id>", methods=["DELETE"])
 @jwt_required()
 def delete_company(company_id):
     """DELETE  /v1/companies/:id   Deletes company with specific company_id"""
@@ -187,7 +198,7 @@ def delete_company(company_id):
 
     # Create response
     message = {}
-    message['message'] = f"Company with company_id={company_id} has been deleted"
+    message["message"] = f"Company with company_id={company_id} has been deleted"
     response = jsonify(message)
     response.status_code = 200
 
@@ -195,13 +206,13 @@ def delete_company(company_id):
     return response
 
 
-@bp.route('/v1/upload', methods=['POST'])
+@bp.route("/v1/upload", methods=["POST"])
 @jwt_required()
 def upload_file():
-    if 'file' not in request.files:
+    if "file" not in request.files:
         return error_response(400, "No file key in request.files")
 
-    img = request.files['file']
+    img = request.files["file"]
     if img.filename == "":
         return error_response(400, "Please select a file")
 
@@ -212,7 +223,7 @@ def upload_file():
         return error_response(400, f"Invalid file extension, please use .gif, .jpg or .png")
 
     output = {}
-    output['url'] = str(upload_file_to_s3(img, Config.S3_BUCKET_NAME))
+    output["url"] = str(upload_file_to_s3(img, Config.S3_BUCKET_NAME))
 
     response = jsonify(output)
     response.status_code = 201
