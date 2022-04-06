@@ -157,8 +157,7 @@ def update_company(company_id):
     for field in fields_in_related_tables:
         if field in validated_data:
             if field == "city_name":
-                city_dict = insert_city(validated_data)
-                validated_data["city_id"] = city_dict["city_id"]
+                validated_data["city_id"] = insert_city(validated_data)
                 validated_data.pop("city_name")
             if field in ["disciplines", "branches", "tags"]:
                 db.session.execute(
