@@ -1,37 +1,71 @@
-from flask import render_template, url_for, flash, redirect, request
-from flask_login import current_user, login_user, logout_user
-from werkzeug.urls import url_parse
+"""
+This module provides all the endpoints for authentication API:
+
+POST    /token          Creates token if valid credentials
+DELETE  /token          Revokes token (not implemented yet)     
+GET     /check_token    Returns id/username of logged-in user
+POST    /register       Creates new user
+
+"""
 from app import db
+from app.errors.handlers import bad_request, error_response
 from app.auth import bp
-from app.auth.forms import LoginForm
-from app.models import Users
+from app.models import Users, NewAdminSchema
+from flask import request, jsonify
+from flask_jwt_extended import create_access_token, jwt_required, current_user
+from marshmallow import ValidationError
 
 
-@bp.route('/login', methods=['GET', 'POST'])
-def login():
-    # If user is already logged in redirect to home
-    if current_user.is_authenticated:
-        return redirect(url_for('main.index'))
-    # Create Login form
-    form = LoginForm()
+@bp.route("token", methods=["POST"])
+def create_token():
+    """POST    /token          Creates token if valid credentials"""
+    # Get User credentials from POST
+    username = request.json.get("username", None)
+    password = request.json.get("password", None)
 
-    # Processing form submit
-    if form.validate_on_submit():
-        user = Users.query.filter_by(username=form.username.data).first()
-        if user is None or not user.check_password(form.password.data):
-            flash("Invalid Login credentials")
-            return redirect(url_for('auth.login'))
-        login_user(user, remember=form.remember_me.data)
+    # Lookup user in DB and check credentials, return error if not valid
+    user = Users.query.filter_by(username=username).one_or_none()
+    if not user or not user.check_password(password):
+        return error_response(401, "Invalid user credentials")
 
-        # Redirecting to the next page after succesful login
-        next_page = request.args.get('next')
-        if not next_page or url_parse(next_page).netloc != '':
-            next_page = url_for('main.index')
-        return redirect(next_page)
-    return render_template('login.html', title='Login', form=form)
+    # Create and return token if credentials are valid
+    access_token = create_access_token(identity=user)
+    return jsonify({"token": access_token, "user_id": user.id, "username": user.username})
 
 
-@bp.route('/logout')
-def logout():
-    logout_user()
-    return redirect(url_for('main.index'))
+@bp.route("check_token", methods=["GET"])
+@jwt_required()
+def check_token():
+    """GET     /check_token    Returns id/username of logged-in user"""
+    return jsonify(id=current_user.id, username=current_user.username)
+
+
+@bp.route("register", methods=["POST"])
+@jwt_required()
+def register_admin():
+    """POST    /register       Creates new user"""
+    data = request.get_json() or {}
+
+    # Validate submitted data
+    try:
+        validated_data = NewAdminSchema().load(data)
+    except ValidationError as err:
+        return bad_request(err.messages)
+
+    # Make a new user
+    new_admin = Users(username=validated_data["username"], email=validated_data["email"])
+    new_admin.set_password(validated_data["password"])
+
+    # Update DB
+    db.session.add(new_admin)
+    db.session.commit()
+
+    # Prepare response
+    response = jsonify(new_admin.to_dict())
+    response.status_code = 201
+
+    return response
+
+
+if __name__ == "__main__":
+    pass

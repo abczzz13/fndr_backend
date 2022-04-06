@@ -1,7 +1,7 @@
 from flask import json
 
 
-def test_patch_valid_company(client, get_token, insert_data_db):
+def test_patch_valid_company(client, get_token):
     '''
     GIVEN a Flask application configured for testing
     WHEN a PATCH request is made to /api/v1/companies/1 with a valid patch information
@@ -29,8 +29,12 @@ def test_patch_valid_company(client, get_token, insert_data_db):
         "year": 1969
     }
 
-    response = client.patch('/api/v1/companies/1', data=json.dumps(data),
-                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.patch(
+        '/api/v1/companies/1',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
 
     result = json.loads(response.get_data(as_text=True))
 
@@ -58,8 +62,13 @@ def test_patch_invalid_company_name(client, get_token):
         "company_name": "H1 Webdevelopment"
     }
 
-    response = client.patch('/api/v1/companies/2', data=json.dumps(data),
-                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.patch(
+        '/api/v1/companies/2',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
+
     result = json.loads(response.get_data(as_text=True))
 
     assert result['message']['_schema'][0] == "A company already exists with this company_name. Please use a different company_name."
@@ -76,8 +85,13 @@ def test_patch_invalid_company_fields(client, get_token):
         "company_id": 22
     }
 
-    response = client.patch('/api/v1/companies/2', data=json.dumps(data),
-                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.patch(
+        '/api/v1/companies/2',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
+
     result = json.loads(response.get_data(as_text=True))
 
     assert result['message']['region'][0] == "Unknown field."
@@ -95,8 +109,13 @@ def test_patch_company_name_unchanged(client, get_token):
         "year": 2000
     }
 
-    response = client.patch('/api/v1/companies/1', data=json.dumps(data),
-                            headers={'Content-Type': 'application/json', 'Authorization': 'Bearer {}'.format(get_token)},)
+    response = client.patch(
+        '/api/v1/companies/1',
+        data=json.dumps(data),
+        headers={
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer {}'.format(get_token)},)
+
     result = json.loads(response.get_data(as_text=True))
 
     assert response.status_code == 200

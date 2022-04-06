@@ -1,16 +1,18 @@
+'''Models for the different Tables in DB with additional methods and validation'''
 from datetime import datetime
-from app import db, login, ma
+from app import db, ma, jwt
 from .utils import get_coordinates
 from flask import url_for
-from flask_login import UserMixin
 from marshmallow import validate, ValidationError, pre_load, post_load
 from werkzeug.security import generate_password_hash, check_password_hash
 
 
 # Pagination mixin Class
 class PaginationAPIMixin(object):
+    '''Class for adding pagination'''
     @staticmethod
-    def to_collection_dict(query, page, per_page, endpoint, **kwargs):
+    def to_collection_dict(query, page, per_page, endpoint, **kwargs) -> dict:
+        '''Preparing the output for the GET companies as dictionary with pagination'''
         resources = query.paginate(page, per_page, False)
         data = {
             # Making a dictionary of the query results
@@ -23,23 +25,44 @@ class PaginationAPIMixin(object):
                 'total_items': resources.total
             },
             # Links to current/next/previous/ pages
-            # TODO: Update urls to include query parameters
             '_links': {
-                'self': url_for(endpoint, page=page, per_page=per_page, **kwargs),
-                'next': url_for(endpoint, page=page + 1, per_page=per_page, **kwargs) if resources.has_next else None,
-                'previous': url_for(endpoint, page=page - 1, per_page=per_page, **kwargs) if resources.has_prev else None
+                'self': url_for(
+                    endpoint,
+                    page=page,
+                    per_page=per_page,
+                    **kwargs),
+                'next': url_for(
+                    endpoint,
+                    page=page + 1,
+                    per_page=per_page,
+                    **kwargs)
+                if resources.has_next else None,
+                'previous': url_for(
+                    endpoint,
+                    page=page - 1,
+                    per_page=per_page,
+                    **kwargs)
+                if resources.has_prev else None
             }
         }
         return data
 
 
-class Users(UserMixin, db.Model):
+class Users(db.Model):
+    '''Model for users'''
     __tablename__ = 'users'
 
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), index=True,
-                         unique=True, nullable=False)
-    email = db.Column(db.String(128), index=True, unique=True, nullable=False)
+    username = db.Column(
+        db.String(64),
+        index=True,
+        unique=True,
+        nullable=False)
+    email = db.Column(
+        db.String(128),
+        index=True,
+        unique=True,
+        nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     last_seen = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -47,60 +70,82 @@ class Users(UserMixin, db.Model):
         return f'<User {self.id}: {self.username} ({self.email})>'
 
     def set_password(self, password):
+        '''Set password'''
         self.password_hash = generate_password_hash(password)
 
-    def check_password(self, password):
+    def check_password(self, password) -> bool:
+        '''Check password'''
         return check_password_hash(self.password_hash, password)
 
-    def to_dict(self):
-
+    def to_dict(self) -> dict:
+        '''Return user data as a dictionary'''
         data = {
             'id': self.id,
             'username': self.username,
             'email': self.email
         }
-
         return data
 
 
-@login.user_loader
-def load_user(id):
-    return Users.query.get(int(id))
+@jwt.user_identity_loader
+def user_identity_lookup(user):
+    return user.id
+
+
+@jwt.user_lookup_loader
+def user_lookup_callback(_jwt_header, jwt_data):
+    identity = jwt_data["sub"]
+    return Users.query.filter_by(id=identity).one_or_none()
 
 
 # Many to Many table for Companies and Meta
-companies_meta = db.Table('companies_meta',
-                          db.Column('company_id', db.Integer, db.ForeignKey(
-                              'companies.company_id'), index=True),
-                          db.Column('meta_id', db.Integer, db.ForeignKey(
-                              'meta.meta_id'))
-                          )
+companies_meta = db.Table(
+    'companies_meta',
+    db.Column(
+        'company_id',
+        db.Integer,
+        db.ForeignKey('companies.company_id'),
+        index=True),
+    db.Column(
+        'meta_id',
+        db.Integer,
+        db.ForeignKey('meta.meta_id')))
 
 
 class Companies(PaginationAPIMixin, db.Model):
+    ''' Model for companies'''
     __tablename__ = 'companies'
 
     company_id = db.Column(db.Integer, primary_key=True)
-    company_name = db.Column(db.String(64), unique=True, nullable=False)
+    company_name = db.Column(
+        db.String(64),
+        unique=True,
+        nullable=False)
     logo_image_src = db.Column(db.String(255), default='')
-    city_id = db.Column(db.Integer, db.ForeignKey(
-        'cities.city_id'), nullable=False)
+    city_id = db.Column(
+        db.Integer,
+        db.ForeignKey('cities.city_id'),
+        nullable=False)
     website = db.Column(db.String(255), nullable=False)
     year = db.Column(db.Integer)
     company_size = db.Column(db.String(64), nullable=False)
-    city = db.relationship('Cities', backref='company',
+    city = db.relationship('Cities',
+                           backref='company',
                            lazy='joined')
-    metas = db.relationship('Meta', secondary=companies_meta,
-                            lazy='joined', backref=db.backref('meta', lazy='subquery'))
+    metas = db.relationship('Meta',
+                            secondary=companies_meta,
+                            lazy='joined',
+                            backref=db.backref('meta', lazy='subquery'))
 
     def __repr__(self):
-        # '<Company ID: {}>'.format(self.company_id)
         return f'<Company {self.company_id}: {self.company_name}>'
 
     def city_name(self):
+        '''Makes city_name accessible on the object'''
         self.city_name = self.city.city_name
 
-    def to_dict(self):
+    def to_dict(self) -> dict:
+        '''Return company as a dictionary'''
 
         data = {
             'company_id': self.company_id,
@@ -127,28 +172,35 @@ class Companies(PaginationAPIMixin, db.Model):
 
 
 class Cities(db.Model):
+    '''Models for cities'''
     __tablename__ = 'cities'
 
     city_id = db.Column(db.Integer, primary_key=True)
-    city_name = db.Column(db.String(64), unique=True, nullable=False)
+    city_name = db.Column(
+        db.String(64),
+        unique=True,
+        nullable=False)
     region = db.Column(db.String(64))
     city_lat = db.Column(db.Float(precision=8))
     city_lng = db.Column(db.Float(precision=8))
 
     def __repr__(self):
-        # '<City ID: {}>'.format(self.city_id)
         return f'<City {self.city_id}: {self.city_name} ({self.region})>'
 
-    def get_or_create(self, dict):
+    def get_or_create(self, city_dict) -> int:
+        '''Returns city if it exists, otherwise creates the new city'''
         query = Cities.query.filter_by(
-            city_name=dict['city_name'].title()).first()
+            city_name=city_dict['city_name'].title()).first()
         if query is None:
-            if 'region' not in dict:
-                dict['region'] = 'Remote'
+            if 'region' not in city_dict:
+                city_dict['region'] = 'Remote'
 
-            coordinates = get_coordinates(dict['city_name'])
-            new_city = Cities(city_name=dict['city_name'].title(), region=dict['region'],
-                              city_lat=coordinates['lat'], city_lng=coordinates['lng'])
+            coordinates = get_coordinates(city_dict['city_name'])
+            new_city = Cities(
+                city_name=city_dict['city_name'].title(),
+                region=city_dict['region'],
+                city_lat=coordinates['lat'],
+                city_lng=coordinates['lng'])
 
             db.session.add(new_city)
             db.session.commit()
@@ -162,6 +214,7 @@ class Cities(db.Model):
 
 
 class Meta(db.Model):
+    '''Model for meta information'''
     __tablename__ = 'meta'
 
     meta_id = db.Column(db.Integer, primary_key=True)
@@ -169,14 +222,14 @@ class Meta(db.Model):
     meta_string = db.Column(db.String(120))
 
     def __repr__(self):
-        # '<Meta ID {}>'.format(self.meta_id)
         return f'<Meta {self.meta_id}: {self.meta_string} ({self.type})>'
 
-    def get_or_create(self, meta_string, type):
+    def get_or_create(self, meta_string, meta_type) -> int:
+        '''Returns meta if it exists, otherwise creates the new meta'''
         query = Meta.query.filter_by(
-            type=type, meta_string=meta_string).first()
+            type=meta_type, meta_string=meta_string).first()
         if query is None:
-            new_meta = Meta(type=type, meta_string=meta_string)
+            new_meta = Meta(type=meta_type, meta_string=meta_string)
             db.session.add(new_meta)
             db.session.commit()
             setattr(self, 'meta_id', new_meta.meta_id)
@@ -186,19 +239,28 @@ class Meta(db.Model):
 
 
 class NewAdminSchema(ma.SQLAlchemySchema):
+    '''Validation Schema for users/admins'''
     class Meta:
+        '''Meta information'''
         model = Users
         include_fk = True
 
     # The Validation Field:
-    username = ma.Str(validate=validate.Length(min=2, max=64), required=True)
-    email = ma.Email(validate=validate.Length(min=2, max=64),
-                     required=True)  # validate.Email?
-    password = ma.Str(validate=validate.Length(
-        min=8, max=64), required=True, load_only=True)
+    username = ma.Str(
+        validate=validate.Length(min=2, max=64),
+        required=True)
+    email = ma.Email(
+        validate=validate.Length(min=2, max=64),
+        required=True)
+    password = ma.Str(
+        validate=validate.Length(min=8, max=64),
+        required=True,
+        load_only=True)
 
+    # Additional Validation checks
     @post_load
     def username_exists(self, data, **kwargs):
+        '''Lookup if username already exists'''
         if Users.query.filter(Users.username == data['username']).one_or_none():
             raise ValidationError(
                 "This username is already in use, please use a different username.")
@@ -206,6 +268,7 @@ class NewAdminSchema(ma.SQLAlchemySchema):
 
     @post_load
     def email_exists(self, data, **kwargs):
+        '''Lookup if email already exists'''
         if Users.query.filter(Users.email == data['email']).one_or_none():
             raise ValidationError(
                 "This email address is already in use, please use a different email address.")
@@ -213,7 +276,9 @@ class NewAdminSchema(ma.SQLAlchemySchema):
 
 
 class CompaniesValidationSchema(ma.SQLAlchemySchema):
+    '''Validation Schema for POST company'''
     class Meta:
+        '''Meta information'''
         model = Companies
         include_fk = True
 
@@ -223,15 +288,20 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
     sizes = ['1-10', '11-50', '51-100', 'GT-100']
 
     # The Validation fields
-    company_name = ma.Str(validate=validate.Length(
-        min=2, max=64), required=True)
+    company_name = ma.Str(
+        validate=validate.Length(min=2, max=64),
+        required=True)
     logo_image_src = ma.URL()
-    city_name = ma.Str(validate=validate.Length(min=2, max=64), required=True)
+    city_name = ma.Str(
+        validate=validate.Length(min=2, max=64),
+        required=True)
     region = ma.Str(validate=validate.OneOf(regions))
     website = ma.URL(required=True)
-    year = ma.Int(validate=validate.Range(min=1890, max=datetime.now().year))
-    company_size = ma.Str(validate=validate.OneOf(
-        sizes), required=True)
+    year = ma.Int(
+        validate=validate.Range(min=1890, max=datetime.now().year))
+    company_size = ma.Str(
+        validate=validate.OneOf(sizes),
+        required=True)
     disciplines = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
     branches = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
     tags = ma.List(ma.Str(validate=validate.Length(min=2, max=120)))
@@ -239,6 +309,7 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
     # Additional Validation checks
     @pre_load
     def company_id_exists(self, data, **kwargs):
+        '''Validate there is not company_id in data'''
         if "company_id" in data:
             raise ValidationError(
                 "Create new company cannot include company_id. For modifying existing companies please use the PATCH method")
@@ -246,6 +317,7 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
 
     @post_load
     def company_name_exists(self, data, **kwargs):
+        '''Lookup if company_name already exists'''
         if Companies.query.filter(Companies.company_name == data['company_name'].title()).one_or_none():
             raise ValidationError(
                 "A company already exists with this company_name. Please use the PATCH method if you would like to modify this company or use a different company_name if you would like to add a different company.")
@@ -253,7 +325,9 @@ class CompaniesValidationSchema(ma.SQLAlchemySchema):
 
 
 class CompaniesPatchSchema(ma.SQLAlchemySchema):
+    ''' Validation Schema for PATCH company'''
     class Meta:
+        '''Meta information'''
         model = Companies
         include_fk = True
 
@@ -263,13 +337,19 @@ class CompaniesPatchSchema(ma.SQLAlchemySchema):
     sizes = ['1-10', '11-50', '51-100', 'GT-100']
 
     # The Validation fields
-    company_name = ma.Str(validate=validate.Length(
-        min=2, max=64), required=True)
+    company_name = ma.Str(
+        validate=validate.Length(min=2, max=64),
+        required=True)
     logo_image_src = ma.URL()
-    city_name = ma.Str(validate=validate.Length(min=2, max=64), required=True)
-    region = ma.Str(validate=validate.OneOf(regions), dump_only=True)
+    city_name = ma.Str(
+        validate=validate.Length(min=2, max=64),
+        required=True)
+    region = ma.Str(
+        validate=validate.OneOf(regions),
+        dump_only=True)
     website = ma.URL(required=True)
-    year = ma.Int(validate=validate.Range(min=1890, max=datetime.now().year))
+    year = ma.Int(
+        validate=validate.Range(min=1890, max=datetime.now().year))
     company_size = ma.Str(validate=validate.OneOf(
         sizes), required=True)
     disciplines = ma.List(
@@ -281,6 +361,7 @@ class CompaniesPatchSchema(ma.SQLAlchemySchema):
     # Additional Validation check
     @post_load
     def company_name_exists(self, data, **kwargs):
+        '''Lookup if company_name already exists'''
         if 'company_name' in data:
             company = Companies.query.filter_by(
                 company_name=data['company_name'].title()).first()

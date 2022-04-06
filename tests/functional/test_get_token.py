@@ -1,7 +1,7 @@
 from flask import json
 
 
-def test_get_token(client, new_user):
+def test_get_token(client):
     '''
     GIVEN a Flask application configured for testing
     WHEN a POST request is made to /api/v1/token with valid user credentials
@@ -13,8 +13,10 @@ def test_get_token(client, new_user):
         "password": "testtest"
     }
 
-    response = client.post("/api/v1/token", data=json.dumps(data),
-                           headers={"Content-Type": "application/json"},)
+    response = client.post(
+        "/auth/token",
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json"},)
 
     result = json.loads(response.get_data(as_text=True))
 
@@ -22,10 +24,10 @@ def test_get_token(client, new_user):
     assert result['token'] is not None
 
 
-def test_get_token_invalid(client, new_user):
+def test_get_token_invalid(client):
     '''
     GIVEN a Flask application configured for testing
-    WHEN a POST request is made to /api/v1/token with invalid user credentials
+    WHEN a POST request is made to /auth/token with invalid user credentials
     THEN check that the response is unauthorized and correct error message is shown
     '''
 
@@ -34,8 +36,10 @@ def test_get_token_invalid(client, new_user):
         "password": "testtest"
     }
 
-    response = client.post("/api/v1/token", data=json.dumps(data),
-                           headers={"Content-Type": "application/json"},)
+    response = client.post(
+        "/auth/token",
+        data=json.dumps(data),
+        headers={"Content-Type": "application/json"},)
 
     result = json.loads(response.get_data(as_text=True))
 

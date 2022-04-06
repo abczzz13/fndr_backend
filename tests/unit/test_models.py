@@ -7,8 +7,12 @@ def test_companies_model(client, init_testdb):
     WHEN a new company is created
     THEN check the company_id, company_name, logo_image_src, city_id, website, year, company_size
     '''
-    company = Companies(company_name='Testing Company', logo_image_src='http://www.testing.com/image.png',
-                        website='http://www.testing.com', year='2021', company_size='11-50')
+    company = Companies(
+        company_name='Testing Company',
+        logo_image_src='http://www.testing.com/image.png',
+        website='http://www.testing.com',
+        year='2021',
+        company_size='11-50')
 
     assert company.company_name == 'Testing Company'
     assert company.logo_image_src == 'http://www.testing.com/image.png'
@@ -23,7 +27,9 @@ def test_cities_model(client, init_testdb):
     WHEN a new city is created
     THEN check the city_id, city_name, region
     '''
-    city = Cities(city_name='Verzonnen Stad', region='Noord-Holland')
+    city = Cities(
+        city_name='Verzonnen Stad',
+        region='Noord-Holland')
 
     assert city.city_name == 'Verzonnen Stad'
     assert city.region == 'Noord-Holland'
@@ -35,7 +41,9 @@ def test_meta_model(client, init_testdb):
     WHEN a new meta is created
     THEN check the type, meta_string
     '''
-    meta = Meta(type='Discipline', meta_string='Application Testing')
+    meta = Meta(
+        type='Discipline',
+        meta_string='Application Testing')
 
     assert meta.type == 'Discipline'
     assert meta.meta_string == 'Application Testing'
