@@ -1,10 +1,30 @@
 """ This module provides custom utility functions importing data into the Database."""
+import json
+import os
 from app import db
-from app.models import Companies, Cities, Meta
+from app.models import Companies, Cities, Meta, Users
 from app.utils import get_coordinates
 
 
-def insert_city(company_dict) -> int:
+def create_admin():
+    """Create a new admin
+
+    Parameters:
+    No parameters can be provided, admin created will be hardcoded and based
+    on environmental variables.
+
+    Returns:
+    """
+    admin = Users(username=os.environ.get("ADMIN_USERNAME"), email=os.environ.get("ADMIN_EMAIL"))
+    admin.set_password(os.environ.get("ADMIN_PW"))
+
+    db.session.add(admin)
+    db.session.commit()
+
+    return
+
+
+def insert_city(company_dict: dict) -> int:
     """Import the a city into the DB
 
     Parameters:
@@ -13,12 +33,12 @@ def insert_city(company_dict) -> int:
     Returns:
     city_id (int)
     """
-    # Correct for multiple inputs:
+    # Correct for multiple inputs (import from json uses "city", API endpoints use "city_name" ):
     if "city_name" not in company_dict:
         company_dict["city_name"] = company_dict["city"]
 
-    # Query if city is already in DB
-    query = Cities.query.filter_by(city_name=company_dict["city_name"].title()).first()
+    # Check if city already present in DB
+    query = Cities.query.filter_by(city_name=company_dict["city_name"].title()).one_or_none()
 
     # Return city_id if city can be found
     if query is not None:
@@ -60,7 +80,7 @@ def insert_city(company_dict) -> int:
     return city.city_id
 
 
-def insert_company(company_dict, city_id) -> int:
+def insert_company(company_dict: dict, city_id: int) -> int:
     """Import the a company into the DB
 
     Parameters:
@@ -93,7 +113,7 @@ def insert_company(company_dict, city_id) -> int:
     return company.company_id
 
 
-def insert_meta(meta_list, type, company_id):
+def insert_meta(meta_list: list, type: str, company_id: int):
     """Import the meta data of a certain type for a company into the DB
 
     Parameters:
@@ -117,4 +137,38 @@ def insert_meta(meta_list, type, company_id):
                 db.session.commit()
             except:
                 print(f"Company ID ({company_id}) has duplicate meta ({meta_id})")
+    return
+
+
+def import_data(import_file: json):
+    """Import the meta data of a certain type for a company into the DB
+
+    Parameters:
+    meta_list (list): a list of all the meta items for a certain meta_type
+    type (str): the meta_type: disciplines, branches, tags
+    company_id (int): the company_id for which the meta data is imported
+
+    Returns:
+    Imports the data into the DB
+    """
+    # Opening JSON file
+    with open(import_file) as file:
+
+        # returns JSON object as a dictionary
+        data = json.load(file)
+
+        # Iterating through the agencies in the json file
+        for agency in data["agencies"]:
+
+            # Insert the city and get the city_id
+            city_id = insert_city(agency)
+
+            # Insert the company and the company_id
+            company_id = insert_company(agency, city_id)
+
+            # Insert meta
+            meta_types = ["tags", "branches", "disciplines"]
+            for meta in meta_types:
+                insert_meta(agency[meta], meta, company_id)
+
     return

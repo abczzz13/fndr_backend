@@ -13,7 +13,7 @@ from app import db, cache
 from app.api import bp
 from app.errors.handlers import bad_request, error_response
 from app.models import Companies, Cities, Meta, companies_meta, CompaniesValidationSchema, CompaniesPatchSchema
-from app.import_data_v2 import insert_meta, insert_city
+from app.utils_import import insert_meta, insert_city
 from app.utils import upload_file_to_s3, validate_image
 from config import Config
 from flask import jsonify, request, url_for
