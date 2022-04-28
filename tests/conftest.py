@@ -1,12 +1,13 @@
+import os
 from app import create_app, db
-from app.import_data_v2 import import_data
+from app.utils_import import import_data
 from app.models import Users
 from config import TestConfig
 from flask import json
 import pytest
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def client():
 
     flask_app = create_app(config_class=TestConfig)
@@ -20,7 +21,7 @@ def client():
             yield test_client
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def init_testdb():
     # To make sure to start with a clean slate:
     db.drop_all()
@@ -36,17 +37,16 @@ def init_testdb():
     db.drop_all()
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def insert_data_db(init_testdb):
-    import_data('test_db.json')
+    file = os.path.join(TestConfig.APP_ROOT, "tests", "test_db.json")
+    import_data(file)
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def new_user(init_testdb):
-    new_user = Users(
-        username='Test User',
-        email='test@fnder-backend.com')
-    new_user.set_password('testtest')
+    new_user = Users(username="Test User", email="test@fnder-backend.com")
+    new_user.set_password("testtest")
 
     db.session.add(new_user)
     db.session.commit()
@@ -54,21 +54,19 @@ def new_user(init_testdb):
     return new_user
 
 
-@pytest.fixture(scope='session')
+@pytest.fixture(scope="session")
 def get_token(client, new_user):
 
-    data = {
-        "username": "Test User",
-        "password": "testtest"
-    }
+    data = {"username": "Test User", "password": "testtest"}
 
     response = client.post(
         "/auth/token",
         data=json.dumps(data),
-        headers={"Content-Type": "application/json"},)
+        headers={"Content-Type": "application/json"},
+    )
 
     result = json.loads(response.get_data(as_text=True))
 
-    token = result['token']
+    token = result["token"]
 
     return token

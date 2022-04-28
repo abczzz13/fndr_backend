@@ -10,7 +10,8 @@ POST    /register       Creates new user
 from app import db
 from app.errors.handlers import bad_request, error_response
 from app.auth import bp
-from app.models import Users, NewAdminSchema
+from app.models import Users
+from app.serializers import NewAdminSchema
 from flask import request, jsonify
 from flask_jwt_extended import create_access_token, jwt_required, current_user
 from marshmallow import ValidationError
@@ -65,7 +66,3 @@ def register_admin():
     response.status_code = 201
 
     return response
-
-
-if __name__ == "__main__":
-    pass

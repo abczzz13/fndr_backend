@@ -9,11 +9,13 @@ DELETE  /v1/companies/:id   Deletes company with specific company_id
 
 """
 import os
+
 from app import db, cache
 from app.api import bp
 from app.errors.handlers import bad_request, error_response
-from app.models import Companies, Cities, Meta, companies_meta, CompaniesValidationSchema, CompaniesPatchSchema
-from app.import_data_v2 import insert_meta, insert_city
+from app.models import Companies, Cities, Meta, companies_meta
+from app.serializers import CompaniesValidationSchema, CompaniesPatchSchema
+from app.utils_import import insert_meta, insert_city
 from app.utils import upload_file_to_s3, validate_image
 from config import Config
 from flask import jsonify, request, url_for
@@ -157,8 +159,7 @@ def update_company(company_id):
     for field in fields_in_related_tables:
         if field in validated_data:
             if field == "city_name":
-                city_dict = insert_city(validated_data)
-                validated_data["city_id"] = city_dict["city_id"]
+                validated_data["city_id"] = insert_city(validated_data)
                 validated_data.pop("city_name")
             if field in ["disciplines", "branches", "tags"]:
                 db.session.execute(
@@ -200,7 +201,7 @@ def delete_company(company_id):
     message = {}
     message["message"] = f"Company with company_id={company_id} has been deleted"
     response = jsonify(message)
-    response.status_code = 200
+    response.status_code = 204
 
     cache.clear()
     return response
