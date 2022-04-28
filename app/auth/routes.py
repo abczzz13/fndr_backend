@@ -66,7 +66,3 @@ def register_admin():
     response.status_code = 201
 
     return response
-
-
-if __name__ == "__main__":
-    pass

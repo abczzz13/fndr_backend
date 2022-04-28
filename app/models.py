@@ -1,10 +1,11 @@
 """Models for the different Tables in DB with additional methods and validation"""
 from datetime import datetime
+
 from app import db, jwt
-from .utils import get_coordinates
 from flask import url_for
 from werkzeug.security import generate_password_hash, check_password_hash
 
+from .utils import get_coordinates
 
 # Pagination mixin Class
 class PaginationAPIMixin(object):
