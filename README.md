@@ -2,7 +2,7 @@
 
 ## Introduction
 
-The idea of the FNDR app is to list all the agencies, working in the ...., who might be looking for junior developers. On this platform you can filter the agencies on mutiple parameters such as location, size, etc. and find more details about the agencies that might interest you.
+The idea of the FNDR app is to list IT agencies, who might be interested in hiring junior developers. On this platform you can filter the agencies on mutiple parameters such as location, size, etc. and find more details about the agencies that might interest you.
 
 [Here you can find a working version of the app](https://fndr.netlify.app/)
 
